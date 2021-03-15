@@ -6,7 +6,7 @@
 // -----------------------------------------------------------------------------------------------------
 
 /*!\file
- * \brief Provides libjst::utility::logger.
+ * \brief Provides logging utilities for printing more debug information during the JST construction and traversal.
  * \author Rene Rahn <rene.rahn AT fu-berlin.de>
  */
 
