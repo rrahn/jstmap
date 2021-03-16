@@ -55,7 +55,7 @@ public:
     explicit journal_decorator(segment_type initial_segment) noexcept
     {
         _size = std::ranges::size(initial_segment);
-        if (_size > 0)
+        if (_size > 0) // only add entry if initial segment is not empty.
             _dictionary.emplace(0, std::move(initial_segment));
     }
 
