@@ -113,6 +113,26 @@ TEST_F(journal_decorator_test, record_insertion)
     }
 }
 
+TEST_F(journal_decorator_test, record_insertion_in_empty_journal_sequence)
+{
+    using namespace std::literals;
+
+    std::string empty_ref{""s};
+    std::string single_insertion{"i"s};
+
+    libjst::journal_decorator jd{segment_t{empty_ref}};
+
+    EXPECT_EQ(jd.size(), 0u);
+    EXPECT_TRUE(jd.empty());
+
+    bool insert_result = jd.record_insertion(0, segment_t{single_insertion});
+
+    EXPECT_TRUE(insert_result);
+    EXPECT_EQ(jd.size(), 1u);
+    EXPECT_FALSE(jd.empty());
+    EXPECT_RANGE_EQ(jd, "i"s);
+}
+
 TEST_F(journal_decorator_test, record_deletion)
 {
     using namespace std::literals;

@@ -55,7 +55,8 @@ public:
     explicit journal_decorator(segment_type initial_segment) noexcept
     {
         _size = std::ranges::size(initial_segment);
-        _dictionary.emplace(0, std::move(initial_segment));
+        if (_size > 0)
+            _dictionary.emplace(0, std::move(initial_segment));
     }
 
     bool record_insertion(size_type const position, segment_type segment)
