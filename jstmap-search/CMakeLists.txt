@@ -1,5 +1,5 @@
 
-file(GLOB HEADER_LIST CONFIGURE_DEPENDS "jstmap/index/*.hpp")
+file(GLOB HEADER_LIST CONFIGURE_DEPENDS "jstmap/search/*.hpp")
 
 ### Base interface target for the index subcommand.
 add_library (jstmap_search_base INTERFACE)
@@ -35,7 +35,7 @@ target_include_directories (jstmap_search_output PUBLIC jstmap::search::base lib
 target_link_libraries (jstmap_search_output PUBLIC jstmap::search::base libjst::libjst)
 
 ### Create static library for index subcommand
-add_library (jstmap_search STATIC jstmap/search/search_main.cpp ${HEADER_LIST})
+add_library (jstmap_search STATIC jstmap/search/search_main.cpp)
 target_include_directories (jstmap_search PUBLIC jstmap_search_input_jst jstmap_search_search jstmap_search_input_queries jstmap_search_output)
 target_link_libraries (jstmap_search PUBLIC jstmap_search_input_jst jstmap_search_search jstmap_search_input_queries jstmap_search_output)
 add_library (jstmap::search ALIAS jstmap_search)

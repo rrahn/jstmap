@@ -21,14 +21,16 @@ TEST(jstmap_index, search_jst)
 
     std::vector results = jstmap::search_queries(std::move(jst), std::move(reads));
 
-    EXPECT_EQ(results[0], (libjst::context_position{0, 0}));
-    EXPECT_EQ(results[1], (libjst::context_position{0, 16}));
-    EXPECT_EQ(results[2], (libjst::context_position{0, 36}));
-    EXPECT_EQ(results[3], (libjst::context_position{0, 1}));
-    EXPECT_EQ(results[4], (libjst::context_position{0, 21}));
-    EXPECT_EQ(results[5], (libjst::context_position{0, 41}));
-    EXPECT_EQ(results[6], (libjst::context_position{0, 61}));
-    EXPECT_EQ(results[7], (libjst::context_position{0, 70}));
-    EXPECT_EQ(results[8], (libjst::context_position{0, 41}));
-    EXPECT_EQ(results[9], (libjst::context_position{0, 50}));
+    EXPECT_TRUE((std::ranges::find(results, libjst::context_position{0, 00})) != results.end());
+    EXPECT_TRUE((std::ranges::find(results, libjst::context_position{0, 16})) != results.end());
+    EXPECT_TRUE((std::ranges::find(results, libjst::context_position{0, 36})) != results.end());
+    EXPECT_TRUE((std::ranges::find(results, libjst::context_position{0, 01})) != results.end());
+    EXPECT_TRUE((std::ranges::find(results, libjst::context_position{0, 21})) != results.end());
+    EXPECT_TRUE((std::ranges::find(results, libjst::context_position{0, 41})) != results.end());
+    EXPECT_TRUE((std::ranges::find(results, libjst::context_position{0, 61})) != results.end());
+    EXPECT_TRUE((std::ranges::find(results, libjst::context_position{0, 70})) != results.end());
+    EXPECT_TRUE((std::ranges::find(results, libjst::context_position{0, 41})) != results.end());
+    EXPECT_TRUE((std::ranges::find(results, libjst::context_position{0, 50})) != results.end());
+
+    EXPECT_EQ(results.size(), 10u);
 }
