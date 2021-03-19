@@ -37,7 +37,7 @@ template <typename ...arguments_t>
         { seqan3::debug_stream << std::declval<arguments_t>() };
     } && ...)
 //!\endcond
-void log_debug(uint32_t const line, const char* file_name, arguments_t && ...args)
+constexpr void log_debug(uint32_t const line, const char* file_name, arguments_t && ...args)
 {
     seqan3::debug_stream << file_name << ":" << line << ": debug: ";
     (seqan3::debug_stream << ... << std::forward<arguments_t>(args)) << '\n';
