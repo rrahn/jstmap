@@ -12,7 +12,8 @@
 
 #include <libjst/journal_decorator.hpp>
 
-using journal_decorator_t = libjst::journal_decorator<char>;
+using segment_t = std::span<char>;
+using journal_decorator_t = libjst::journal_decorator<segment_t>;
 using journal_decorator_iterator = std::ranges::iterator_t<journal_decorator_t>;
 
 template <>
@@ -21,7 +22,6 @@ struct iterator_fixture<journal_decorator_iterator> : public ::testing::Test
     std::string reference{"aaaaaaaa"};
     std::string ins_segment{"ccccgggggggg"};
     std::string repl_segment{"tttt"};
-
 
     using iterator_tag = std::random_access_iterator_tag;
     static constexpr bool const_iterable = true;

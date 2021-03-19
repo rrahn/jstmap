@@ -13,6 +13,7 @@
 
 struct journal_decorator_test : public ::testing::Test
 {
+    using segment_t = std::span<char>;
     std::string sequence{"aaaaccccggggtttt"};
 };
 
@@ -20,18 +21,18 @@ struct journal_decorator_test : public ::testing::Test
 
 TEST_F(journal_decorator_test, construction)
 {
-    libjst::journal_decorator<char> jd{};
+    libjst::journal_decorator<segment_t> jd{};
     EXPECT_EQ(jd.size(), 0u);
     EXPECT_TRUE(jd.empty());
 
-    jd = libjst::journal_decorator{std::span{sequence}};
+    jd = libjst::journal_decorator{segment_t{sequence}};
     EXPECT_EQ(jd.size(), sequence.size());
     EXPECT_FALSE(jd.empty());
 }
 
 TEST_F(journal_decorator_test, iterator)
 {
-    libjst::journal_decorator jd{std::span{sequence}};
+    libjst::journal_decorator jd{segment_t{sequence}};
     EXPECT_RANGE_EQ(jd, sequence);
 
     // TODO: Check const iterator
@@ -44,9 +45,9 @@ TEST_F(journal_decorator_test, record_insertion)
     std::string segment{"uu"s};
 
     { // insert in middel
-        libjst::journal_decorator jd{std::span{sequence}};
+        libjst::journal_decorator jd{segment_t{sequence}};
 
-        bool insert_result = jd.record_insertion(8, std::span{segment});
+        bool insert_result = jd.record_insertion(8, segment_t{segment});
 
         EXPECT_TRUE(insert_result);
         EXPECT_EQ(jd.size(), sequence.size() + segment.size());
@@ -57,14 +58,14 @@ TEST_F(journal_decorator_test, record_insertion)
 
     // insert in empty
     {
-        libjst::journal_decorator<char> jd{};
-        bool insert_result = jd.record_insertion(8, std::span{segment});
+        libjst::journal_decorator<segment_t> jd{};
+        bool insert_result = jd.record_insertion(8, segment_t{segment});
 
         EXPECT_FALSE(insert_result);
         EXPECT_EQ(jd.size(), 0u);
         // EXPECT_RANGE_EQ(jd, std::string{}); TODO: check me!
 
-        insert_result = jd.record_insertion(0, std::span{segment});
+        insert_result = jd.record_insertion(0, segment_t{segment});
 
         EXPECT_TRUE(insert_result);
         EXPECT_EQ(jd.size(), segment.size());
@@ -73,14 +74,14 @@ TEST_F(journal_decorator_test, record_insertion)
 
     // insert at end
     {
-        libjst::journal_decorator jd{std::span{sequence}};
-        bool insert_result = jd.record_insertion(sequence.size() + 1, std::span{segment});
+        libjst::journal_decorator jd{segment_t{sequence}};
+        bool insert_result = jd.record_insertion(sequence.size() + 1, segment_t{segment});
 
         EXPECT_FALSE(insert_result);
         EXPECT_EQ(jd.size(), sequence.size());
         EXPECT_RANGE_EQ(jd, sequence);
 
-        insert_result = jd.record_insertion(sequence.size(), std::span{segment});
+        insert_result = jd.record_insertion(sequence.size(), segment_t{segment});
 
         EXPECT_TRUE(insert_result);
         EXPECT_EQ(jd.size(), sequence.size() + segment.size());
@@ -89,8 +90,8 @@ TEST_F(journal_decorator_test, record_insertion)
 
     // insert at beginning
     {
-        libjst::journal_decorator jd{std::span{sequence}};
-        bool insert_result = jd.record_insertion(0, std::span{segment});
+        libjst::journal_decorator jd{segment_t{sequence}};
+        bool insert_result = jd.record_insertion(0, segment_t{segment});
 
         EXPECT_TRUE(insert_result);
         EXPECT_EQ(jd.size(), sequence.size() + segment.size());
@@ -99,13 +100,13 @@ TEST_F(journal_decorator_test, record_insertion)
 
     // insert on same position twice.
     {
-        libjst::journal_decorator jd{std::span{sequence}};
+        libjst::journal_decorator jd{segment_t{sequence}};
 
-        bool insert_result = jd.record_insertion(8, std::span{segment});
+        bool insert_result = jd.record_insertion(8, segment_t{segment});
         EXPECT_TRUE(insert_result);
         EXPECT_EQ(jd.size(), sequence.size() + segment.size());
 
-        insert_result = jd.record_insertion(8, std::span{segment});
+        insert_result = jd.record_insertion(8, segment_t{segment});
         EXPECT_TRUE(insert_result);
         EXPECT_EQ(jd.size(), sequence.size() + (2 * segment.size()));
         std::string expected{sequence};
@@ -141,7 +142,7 @@ TEST_F(journal_decorator_test, record_deletion)
     // invalid erase
 
     { // erase from empty journal decorator
-        libjst::journal_decorator<char> jd{};
+        libjst::journal_decorator<segment_t> jd{};
 
         bool erase_result = jd.record_deletion(0, 10);
 
@@ -151,7 +152,7 @@ TEST_F(journal_decorator_test, record_deletion)
     }
 
     { // erase inverted range
-        libjst::journal_decorator jd{std::span{sequence}};
+        libjst::journal_decorator jd{segment_t{sequence}};
 
         bool erase_result = jd.record_deletion(5, 4);
 
@@ -161,7 +162,7 @@ TEST_F(journal_decorator_test, record_deletion)
     }
 
     { // erase region that goes over the end of the journal decorator
-        libjst::journal_decorator jd{std::span{sequence}};
+        libjst::journal_decorator jd{segment_t{sequence}};
 
         bool erase_result = jd.record_deletion(5, 17);
 
@@ -171,7 +172,7 @@ TEST_F(journal_decorator_test, record_deletion)
     }
 
     { // erase region that goes over the end of the journal decorator
-        libjst::journal_decorator jd{std::span{sequence}};
+        libjst::journal_decorator jd{segment_t{sequence}};
 
         bool erase_result = jd.record_deletion(16, 17);
 
@@ -181,7 +182,7 @@ TEST_F(journal_decorator_test, record_deletion)
     }
 
     { // erase empty segment
-        libjst::journal_decorator jd{std::span{sequence}};
+        libjst::journal_decorator jd{segment_t{sequence}};
 
         bool erase_result = jd.record_deletion(5, 5);
 
@@ -194,7 +195,7 @@ TEST_F(journal_decorator_test, record_deletion)
     // erase from journal decorator with single entry
 
     { // erase some internal segment
-        libjst::journal_decorator jd{std::span{sequence}};
+        libjst::journal_decorator jd{segment_t{sequence}};
 
         bool erase_result = jd.record_deletion(4, 8);
 
@@ -207,7 +208,7 @@ TEST_F(journal_decorator_test, record_deletion)
     }
 
     { // erase single element within entry
-        libjst::journal_decorator jd{std::span{sequence}};
+        libjst::journal_decorator jd{segment_t{sequence}};
 
         bool erase_result = jd.record_deletion(7, 8);
 
@@ -220,7 +221,7 @@ TEST_F(journal_decorator_test, record_deletion)
     }
 
     { // erase entire entry
-        libjst::journal_decorator jd{std::span{sequence}};
+        libjst::journal_decorator jd{segment_t{sequence}};
 
         bool erase_result = jd.record_deletion(0, 16);
 
@@ -232,7 +233,7 @@ TEST_F(journal_decorator_test, record_deletion)
     }
 
     { // erase suffix of entry
-        libjst::journal_decorator jd{std::span{sequence}};
+        libjst::journal_decorator jd{segment_t{sequence}};
 
         bool erase_result = jd.record_deletion(5, 16);
 
@@ -245,7 +246,7 @@ TEST_F(journal_decorator_test, record_deletion)
 
     // erase prefix of entry
     {
-        libjst::journal_decorator jd{std::span{sequence}};
+        libjst::journal_decorator jd{segment_t{sequence}};
 
         bool erase_result = jd.record_deletion(0, 5);
 
@@ -260,7 +261,7 @@ TEST_F(journal_decorator_test, record_deletion)
     // erase from journal decorator with multiple entries
     // erase between two adjacent entries
 
-    libjst::journal_decorator jd_base{std::span{sequence}};
+    libjst::journal_decorator jd_base{segment_t{sequence}};
 
     EXPECT_TRUE(jd_base.record_deletion(12, 13));
     EXPECT_TRUE(jd_base.record_deletion(8, 9));
@@ -416,7 +417,7 @@ TEST_F(journal_decorator_test, record_substitution)
     // replace invalid
 
     { // replace in empty journal decorator
-        libjst::journal_decorator<char> jd{};
+        libjst::journal_decorator<segment_t> jd{};
 
         EXPECT_FALSE(jd.record_substitution(0, segment));
         EXPECT_EQ(jd.size(), 0u);
@@ -428,7 +429,7 @@ TEST_F(journal_decorator_test, record_substitution)
     }
 
     { // position is after end
-        libjst::journal_decorator jd{std::span{sequence}};
+        libjst::journal_decorator jd{segment_t{sequence}};
 
         EXPECT_FALSE(jd.record_substitution(17, segment));
         EXPECT_EQ(jd.size(), 16u);
@@ -436,7 +437,7 @@ TEST_F(journal_decorator_test, record_substitution)
     }
 
     { // last position is after end
-        libjst::journal_decorator jd{std::span{sequence}};
+        libjst::journal_decorator jd{segment_t{sequence}};
 
         EXPECT_FALSE(jd.record_substitution(15, segment));
         EXPECT_EQ(jd.size(), 16u);
@@ -444,9 +445,9 @@ TEST_F(journal_decorator_test, record_substitution)
     }
 
     { // segment is empty
-        libjst::journal_decorator jd{std::span{sequence}};
+        libjst::journal_decorator jd{segment_t{sequence}};
 
-        EXPECT_FALSE(jd.record_substitution(10, std::span<char>{}));
+        EXPECT_FALSE(jd.record_substitution(10, segment_t{}));
         EXPECT_EQ(jd.size(), 16u);
         EXPECT_FALSE(jd.empty());
     }
@@ -455,7 +456,7 @@ TEST_F(journal_decorator_test, record_substitution)
     // replace within single entry
 
     { // replace middle of entry
-        libjst::journal_decorator jd{std::span{sequence}};
+        libjst::journal_decorator jd{segment_t{sequence}};
 
         EXPECT_TRUE(jd.record_substitution(4, segment));
         EXPECT_EQ(jd.size(), 16u);
@@ -466,10 +467,10 @@ TEST_F(journal_decorator_test, record_substitution)
     }
 
     { // replace entire entry
-        libjst::journal_decorator jd{std::span{sequence}};
+        libjst::journal_decorator jd{segment_t{sequence}};
 
         std::string replace_all(sequence.size(), 'u');
-        EXPECT_TRUE(jd.record_substitution(0, std::span{replace_all}));
+        EXPECT_TRUE(jd.record_substitution(0, segment_t{replace_all}));
         EXPECT_EQ(jd.size(), 16u);
         EXPECT_FALSE(jd.empty());
 
@@ -477,9 +478,9 @@ TEST_F(journal_decorator_test, record_substitution)
     }
 
     { // replace prefix of entry
-        libjst::journal_decorator jd{std::span{sequence}};
+        libjst::journal_decorator jd{segment_t{sequence}};
 
-        EXPECT_TRUE(jd.record_substitution(0, std::span{segment}));
+        EXPECT_TRUE(jd.record_substitution(0, segment_t{segment}));
         EXPECT_EQ(jd.size(), 16u);
         EXPECT_FALSE(jd.empty());
 
@@ -488,9 +489,9 @@ TEST_F(journal_decorator_test, record_substitution)
     }
 
     { // replace suffix of entry
-        libjst::journal_decorator jd{std::span{sequence}};
+        libjst::journal_decorator jd{segment_t{sequence}};
 
-        EXPECT_TRUE(jd.record_substitution(14, std::span{segment}));
+        EXPECT_TRUE(jd.record_substitution(14, segment_t{segment}));
         EXPECT_EQ(jd.size(), 16u);
         EXPECT_FALSE(jd.empty());
 
@@ -502,7 +503,7 @@ TEST_F(journal_decorator_test, record_substitution)
     // replace with multiple entries
     // replace between adjacent entries
 
-    libjst::journal_decorator jd_base{std::span{sequence}};
+    libjst::journal_decorator jd_base{segment_t{sequence}};
     // create: aa|uu|cc|uu|gg|uu|tt|uu
     jd_base.record_substitution(2, segment);
     jd_base.record_substitution(6, segment);
@@ -518,7 +519,7 @@ TEST_F(journal_decorator_test, record_substitution)
     {
         libjst::journal_decorator jd{jd_base};
 
-        EXPECT_TRUE(jd.record_substitution(5, std::span{segment}));
+        EXPECT_TRUE(jd.record_substitution(5, segment_t{segment}));
         EXPECT_EQ(jd.size(), 16u);
         EXPECT_FALSE(jd.empty());
 
@@ -529,7 +530,7 @@ TEST_F(journal_decorator_test, record_substitution)
     {
         libjst::journal_decorator jd{jd_base};
 
-        EXPECT_TRUE(jd.record_substitution(8, std::span{segment}));
+        EXPECT_TRUE(jd.record_substitution(8, segment_t{segment}));
         EXPECT_EQ(jd.size(), 16u);
         EXPECT_FALSE(jd.empty());
 
@@ -541,7 +542,7 @@ TEST_F(journal_decorator_test, record_substitution)
         std::string new_segment{"xxxx"};
         libjst::journal_decorator jd{jd_base};
 
-        EXPECT_TRUE(jd.record_substitution(4, std::span{new_segment}));
+        EXPECT_TRUE(jd.record_substitution(4, segment_t{new_segment}));
         EXPECT_EQ(jd.size(), 16u);
         EXPECT_FALSE(jd.empty());
 
@@ -553,7 +554,7 @@ TEST_F(journal_decorator_test, record_substitution)
         std::string new_segment{"xxx"};
         libjst::journal_decorator jd{jd_base};
 
-        EXPECT_TRUE(jd.record_substitution(4, std::span{new_segment}));
+        EXPECT_TRUE(jd.record_substitution(4, segment_t{new_segment}));
         EXPECT_EQ(jd.size(), 16u);
         EXPECT_FALSE(jd.empty());
 
@@ -565,7 +566,7 @@ TEST_F(journal_decorator_test, record_substitution)
         std::string new_segment{"xxx"};
         libjst::journal_decorator jd{jd_base};
 
-        EXPECT_TRUE(jd.record_substitution(5, std::span{new_segment}));
+        EXPECT_TRUE(jd.record_substitution(5, segment_t{new_segment}));
         EXPECT_EQ(jd.size(), 16u);
         EXPECT_FALSE(jd.empty());
 
@@ -577,8 +578,8 @@ TEST_F(journal_decorator_test, record_substitution)
         std::string new_segment{"x"};
         libjst::journal_decorator jd{jd_base};
 
-        EXPECT_TRUE(jd.record_substitution(5, std::span{new_segment}));
-        EXPECT_TRUE(jd.record_substitution(4, std::span{new_segment}));
+        EXPECT_TRUE(jd.record_substitution(5, segment_t{new_segment}));
+        EXPECT_TRUE(jd.record_substitution(4, segment_t{new_segment}));
         EXPECT_EQ(jd.size(), 16u);
         EXPECT_FALSE(jd.empty());
 
@@ -595,7 +596,7 @@ TEST_F(journal_decorator_test, record_substitution)
         std::string new_segment(sequence.size(), 'y');
         libjst::journal_decorator jd{jd_base};
 
-        EXPECT_TRUE(jd.record_substitution(0, std::span{new_segment}));
+        EXPECT_TRUE(jd.record_substitution(0, segment_t{new_segment}));
         EXPECT_EQ(jd.size(), 16u);
         EXPECT_FALSE(jd.empty());
 
@@ -606,7 +607,7 @@ TEST_F(journal_decorator_test, record_substitution)
     { // replace prefix
         libjst::journal_decorator jd{jd_base};
 
-        EXPECT_TRUE(jd.record_substitution(0, std::span{new_segment}));
+        EXPECT_TRUE(jd.record_substitution(0, segment_t{new_segment}));
         EXPECT_EQ(jd.size(), 16u);
         EXPECT_FALSE(jd.empty());
 
@@ -617,7 +618,7 @@ TEST_F(journal_decorator_test, record_substitution)
     { // replace suffix
         libjst::journal_decorator jd{jd_base};
         size_t const replace_position = jd.size() - new_segment.size();
-        EXPECT_TRUE(jd.record_substitution(replace_position, std::span{new_segment}));
+        EXPECT_TRUE(jd.record_substitution(replace_position, segment_t{new_segment}));
         EXPECT_EQ(jd.size(), 16u);
         EXPECT_FALSE(jd.empty());
 
@@ -628,7 +629,7 @@ TEST_F(journal_decorator_test, record_substitution)
     { // replace middle from begin
         libjst::journal_decorator jd{jd_base};
 
-        EXPECT_TRUE(jd.record_substitution(3, std::span{new_segment}));
+        EXPECT_TRUE(jd.record_substitution(3, segment_t{new_segment}));
         EXPECT_EQ(jd.size(), 16u);
         EXPECT_FALSE(jd.empty());
 
@@ -639,7 +640,7 @@ TEST_F(journal_decorator_test, record_substitution)
     {
         libjst::journal_decorator jd{jd_base};
 
-        EXPECT_TRUE(jd.record_substitution(2, std::span{new_segment}));
+        EXPECT_TRUE(jd.record_substitution(2, segment_t{new_segment}));
         EXPECT_EQ(jd.size(), 16u);
         EXPECT_FALSE(jd.empty());
 

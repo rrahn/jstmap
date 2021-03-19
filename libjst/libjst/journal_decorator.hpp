@@ -22,12 +22,12 @@
 namespace libjst
 {
 
-template <std::regular value_t>
+template <std::ranges::view segment_t>
 class journal_decorator
 {
 private:
 
-    using journal_entry_type = detail::journal_entry<std::span<value_t>>;
+    using journal_entry_type = detail::journal_entry<segment_t>;
     using dictionary_type = std::set<journal_entry_type, std::less<void>>;
     using dictionary_iterator = typename dictionary_type::iterator;
 
@@ -39,11 +39,10 @@ public:
     template <bool is_const_range>
     class iterator;
 
-    using value_type = value_t;
+    using value_type = std::ranges::range_value_t<segment_t>;
     using size_type = typename journal_entry_type::size_type;
-    using reference = std::add_lvalue_reference<value_type>;
-    using const_reference = std::add_lvalue_reference<value_type const>;
-    using segment_type = typename journal_entry_type::segment_type;
+    using reference = std::ranges::range_reference_t<segment_t>;
+    using segment_type = segment_t;
 
     journal_decorator() = default;
     journal_decorator(journal_decorator const &) = default;
@@ -232,17 +231,15 @@ private:
 };
 
 template <std::ranges::contiguous_range range_t>
-journal_decorator(range_t) -> journal_decorator<std::ranges::range_value_t<range_t>>;
+journal_decorator(range_t &&) -> journal_decorator<std::remove_reference_t<range_t>>;
 
-template <std::regular value_t>
+template <std::ranges::view segment_t>
 template <bool is_const_range>
-class journal_decorator<value_t>::iterator
+class journal_decorator<segment_t>::iterator
 {
 private:
 
-    using maybe_const_segment_t = std::conditional_t<is_const_range,
-                                                     segment_type const,
-                                                     segment_type>;
+    using maybe_const_segment_t = std::conditional_t<is_const_range, segment_t const, segment_t>;
 
     using segment_iterator = std::ranges::iterator_t<maybe_const_segment_t>;
     using dictionary_iterator = std::ranges::iterator_t<dictionary_type>;
@@ -271,23 +268,10 @@ public:
 
     iterator(journal_decorator const * host, bool const is_end) : _host{host}
     {
+        _entry_it = (is_end) ? _host->_dictionary.end() : _host->_dictionary.begin();
+
         if (!_host->_dictionary.empty())
-        {
-            if (is_end)
-            {
-                _entry_it = std::ranges::prev(_host->_dictionary.end());
-                _segment_it = segment_end();
-            }
-            else
-            {
-                _entry_it = _host->_dictionary.begin();
-                _segment_it = segment_begin();
-            }
-        }
-        else
-        {
-            _entry_it = _host->_dictionary.end();
-        }
+            _segment_it = (!end_of_journal()) ? segment_begin() : set_end();
     }
 
     iterator(iterator<!is_const_range> other)
@@ -323,7 +307,10 @@ public:
     iterator & operator++() noexcept
     {
         if (++_segment_it == segment_end())
-            _segment_it = (++_entry_it != _host->_dictionary.end()) ? segment_begin() : (--_entry_it, _segment_it);
+        {
+            ++_entry_it;
+            _segment_it = (!end_of_journal()) ? segment_begin() : set_end();
+        }
 
         return *this;
     }
@@ -345,8 +332,10 @@ public:
             difference_type next_position = segment_position() + offset;
             _entry_it = _host->_dictionary.upper_bound(next_position);
 
-            assert(next_position >= _entry_it->segment_begin_position());
-            _segment_it = std::ranges::next(segment_begin(), next_position - _entry_it->segment_begin_position());
+            assert([&] { return end_of_journal() || next_position >= _entry_it->segment_begin_position(); }());
+            _segment_it = (!end_of_journal())
+                        ? std::ranges::next(segment_begin(), next_position - _entry_it->segment_begin_position())
+                        : set_end();
         }
         else
         {
@@ -424,6 +413,20 @@ public:
     //!\}
 
 private:
+
+    bool end_of_journal() const noexcept
+    {
+        return _entry_it == _host->_dictionary.end();
+    }
+
+    auto set_end() noexcept
+    {
+        assert(end_of_journal());
+        assert(_entry_it != _host->_dictionary.begin());
+
+        --_entry_it;
+        return segment_end();
+    }
 
     auto segment_begin() const noexcept
     {
