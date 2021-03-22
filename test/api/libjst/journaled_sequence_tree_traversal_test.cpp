@@ -29,6 +29,7 @@ using shared_event_t = libjst::detail::delta_event_shared<alphabet_t>;
 using delta_event_t = typename shared_event_t::delta_event_type;
 using substitution_t = typename shared_event_t::substitution_type;
 using insertion_t = typename shared_event_t::insertion_type;
+using deletion_t = typename shared_event_t::deletion_type;
 using coverage_t = typename shared_event_t::coverage_type;
 using jst_events_t = std::vector<shared_event_t>;
 
@@ -727,6 +728,276 @@ INSTANTIATE_TEST_SUITE_P(multiple_insertions_into_empty_reference, traversal_tes
         shared_event_t{0u, insertion_t{"b"s}, coverage_t{1, 0, 0, 0}},
         shared_event_t{0u, insertion_t{"cccc"s}, coverage_t{0, 1, 0, 0}},
         shared_event_t{0u, insertion_t{"dddddddd"s}, coverage_t{0, 0, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+// ----------------------------------------------------------------------------
+// Test deletions
+// ----------------------------------------------------------------------------
+
+INSTANTIATE_TEST_SUITE_P(single_base_deletion_in_middle, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{5u, libjst::detail::delta_kind_deletion{1}, coverage_t{1, 0, 0, 1}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(single_base_deletion_at_begin, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{0u, libjst::detail::delta_kind_deletion{1}, coverage_t{1, 1, 0, 1}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(single_base_deletion_at_end, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{9u, libjst::detail::delta_kind_deletion{1}, coverage_t{0, 0, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(multi_base_deletion_in_middle, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{4u, libjst::detail::delta_kind_deletion{3}, coverage_t{1, 0, 0, 1}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(multi_base_deletion_at_begin, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{0u, libjst::detail::delta_kind_deletion{3}, coverage_t{1, 1, 0, 1}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(multi_base_deletion_at_end, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{9u, libjst::detail::delta_kind_deletion{3}, coverage_t{0, 0, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(multiple_deletions_at_begin, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{0u, libjst::detail::delta_kind_deletion{4}, coverage_t{1, 0, 0, 0}},
+        shared_event_t{0u, libjst::detail::delta_kind_deletion{2}, coverage_t{0, 1, 0, 0}},
+        shared_event_t{0u, libjst::detail::delta_kind_deletion{1}, coverage_t{0, 0, 0, 1}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(multiple_deletions_shortly_after_begin, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{1u, libjst::detail::delta_kind_deletion{4}, coverage_t{1, 0, 0, 0}},
+        shared_event_t{2u, libjst::detail::delta_kind_deletion{2}, coverage_t{0, 1, 0, 0}},
+        shared_event_t{3u, libjst::detail::delta_kind_deletion{1}, coverage_t{0, 0, 0, 1}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(multiple_deletions_at_end, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{6u},
+    .events
+    {
+        shared_event_t{6u, libjst::detail::delta_kind_deletion{4}, coverage_t{1, 0, 0, 0, 1, 0}},
+        shared_event_t{8u, libjst::detail::delta_kind_deletion{2}, coverage_t{0, 1, 1, 0, 0, 0}},
+        shared_event_t{9u, libjst::detail::delta_kind_deletion{1}, coverage_t{0, 0, 0, 1, 0, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(deletion_longer_than_context_in_middle, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{4u, libjst::detail::delta_kind_deletion{4}, coverage_t{1, 0, 0, 1}},
+    },
+    .context_size{3u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(deletion_longer_than_context_at_begin, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{0u, libjst::detail::delta_kind_deletion{4}, coverage_t{1, 1, 0, 1}},
+    },
+    .context_size{3u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(deletion_longer_than_context_at_end, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{6u, libjst::detail::delta_kind_deletion{4}, coverage_t{0, 0, 1, 0}},
+    },
+    .context_size{3u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(one_sequence_deleted, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{0u, libjst::detail::delta_kind_deletion{10}, coverage_t{1, 0, 0, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(all_sequences_deleted, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{0u, libjst::detail::delta_kind_deletion{10}, coverage_t{1, 1, 1, 1}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(deletion_generating_only_one_context_in_the_middle, traversal_test, testing::Values(traversal_fixture
+{
+    //
+    //      0123456789
+    //      aaaaaaaaaa
+    //  s1: ----aaaa--
+    //  s2: aaaaaaaa--
+    //  s3: ----aaaaaa
+    //  s4: aaaaaaaaaa
+    //
+    // 00:  aaaa          [ -,  0,  -,  0]
+    // 01:   aaaa         [ -,  1,  -,  1]
+    // 02:    aaaa        [ -,  2,  -,  2]
+    // 03:     aaaa       [ -,  3,  -,  3]
+    // 04:      aaaa      [ 0,  4,  0,  4]
+    // 05:       aaaa     [ -,  -,  1,  5]
+    // 06:        aaaa    [ -,  -,  2,  6]
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{0u, libjst::detail::delta_kind_deletion{4}, coverage_t{1, 0, 1, 0}},
+        shared_event_t{8u, libjst::detail::delta_kind_deletion{2}, coverage_t{1, 1, 0, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(deletion_generating_only_one_split_context, traversal_test, testing::Values(traversal_fixture
+{
+    //      0123456789
+    //      aabaccaada
+    //  s0: --b-cc--d-
+    //  s1: --b-ccaad-
+    //  s2: --bacc--da
+    //  s3: --baccaada
+    //  s4: aab-cc--da
+    //  s5: aab-ccaad-
+    //  s6: aabacc--d-
+    //  s7: aabaccaada
+    //
+    // 00:  aab-c         [ -, -, -, -, 0, 0, -, -]
+    // 01:   ab-cc        [ -, -, -, -, 1, 1, -, -]
+    // 02:    b-cc--d     [ 0, -, -, -, 2, -, -, -]
+    // 03:    b-cca       [ -, 0, -, -, -, 2, -, -]
+    // 04:  aaba          [ -, -, -, -, -, -, 0, 0]
+    // 05:   abac         [ -, -, -, -, -, -, 1, 1]
+    // 06:    bacc        [ -, -, 0, 0, -, -, 2, 2]
+    // 07:     acc--d     [ -, -, 1, -, -, -, 3, -]
+    // 08:     cc--da     [ -, -, 2, -, 3, -, -, -]
+    // 19:    acca        [ -, -, -, 1, -, -, -, 3]
+    // 10:     ccaa       [ -, 1, -, 2, -, 3, -, 4]
+    // 11:      caad      [ -, 2, -, 3, -, 4, -, 5]
+    // 12:        aada    [ -, -, -, 4, -, -, -, 6]
+    .reference{"aabaccaada"s},
+    .sequence_count{8u},
+    .events
+    {
+        shared_event_t{0u, libjst::detail::delta_kind_deletion{2}, coverage_t{1, 1, 1, 1, 0, 0, 0, 0}},
+        shared_event_t{3u, libjst::detail::delta_kind_deletion{1}, coverage_t{1, 1, 0, 0, 1, 1, 0, 0}},
+        shared_event_t{6u, libjst::detail::delta_kind_deletion{2}, coverage_t{1, 0, 1, 0, 1, 0, 1, 0}},
+        shared_event_t{9u, libjst::detail::delta_kind_deletion{1}, coverage_t{1, 1, 0, 0, 0, 1, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(larger_deletion_overlaps_smaller_deletions, traversal_test, testing::Values(traversal_fixture
+{
+    //      0123456789
+    //      aabaccaada
+    //  s0: --b-cc--d-
+    //  s1: --b-ccaad-
+    //  s2: --bacc--da
+    //  s3: --baccaada
+    //  s4: aab-cc--da
+    //  s5: aab-ccaad-
+    //  s6: aa------da
+    //  s7: aa------d-
+    //  s8: aabaccaada
+
+    // 00:  aa------da    [ -, -, -, -, -, -, 0, -, -]
+    // 01:  aab-c         [ -, -, -, -, 0, 0, -, -, -]
+    // 02:   ab-cc        [ -, -, -, -, 1, 1, -, -, -]
+    // 03:    b-cc--d     [ 0, -, -, -, 2, -, -, -, -]
+    // 04:    b-cca       [ -, 0, -, -, -, 2, -, -, -]
+    // 05:  aaba          [ -, -, -, -, -, -, -, -, 0]
+    // 06:   abac         [ -, -, -, -, -, -, -, -, 1]
+    // 07:    bacc        [ -, -, 0, 0, -, -, -, -, 2]
+    // 08:     acc--d     [ -, -, 1, -, -, -, -, -, -]
+    // 09:     cc--da     [ -, -, 2, -, 3, -, -, -, -]
+    // 10:    acca        [ -, -, -, 1, -, -, -, -, 3]
+    // 11:     ccaa       [ -, 1, -, 2, -, 3, -, -, 4]
+    // 12:      caad      [ -, 2, -, 3, -, 4, -, -, 5]
+    // 13:        aada    [ -, -, -, 4, -, -, -, -, 6]
+    .reference{"aabaccaada"s},
+    .sequence_count{9u},
+    .events
+    {
+        shared_event_t{0u, libjst::detail::delta_kind_deletion{2}, coverage_t{1, 1, 1, 1, 0, 0, 0, 0, 0}},
+        shared_event_t{2u, libjst::detail::delta_kind_deletion{6}, coverage_t{0, 0, 0, 0, 0, 0, 1, 1, 0}},
+        shared_event_t{3u, libjst::detail::delta_kind_deletion{1}, coverage_t{1, 1, 0, 0, 1, 1, 0, 0, 0}},
+        shared_event_t{6u, libjst::detail::delta_kind_deletion{2}, coverage_t{1, 0, 1, 0, 1, 0, 0, 0, 0}},
+        shared_event_t{9u, libjst::detail::delta_kind_deletion{1}, coverage_t{1, 1, 0, 0, 0, 1, 0, 1, 0}},
     },
     .context_size{4u}
 }));
