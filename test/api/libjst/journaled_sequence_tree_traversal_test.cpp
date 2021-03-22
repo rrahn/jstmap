@@ -742,7 +742,7 @@ INSTANTIATE_TEST_SUITE_P(single_base_deletion_in_middle, traversal_test, testing
     .sequence_count{4u},
     .events
     {
-        shared_event_t{5u, libjst::detail::delta_kind_deletion{1}, coverage_t{1, 0, 0, 1}},
+        shared_event_t{5u, deletion_t{1}, coverage_t{1, 0, 0, 1}},
     },
     .context_size{4u}
 }));
@@ -753,7 +753,7 @@ INSTANTIATE_TEST_SUITE_P(single_base_deletion_at_begin, traversal_test, testing:
     .sequence_count{4u},
     .events
     {
-        shared_event_t{0u, libjst::detail::delta_kind_deletion{1}, coverage_t{1, 1, 0, 1}},
+        shared_event_t{0u, deletion_t{1}, coverage_t{1, 1, 0, 1}},
     },
     .context_size{4u}
 }));
@@ -764,7 +764,7 @@ INSTANTIATE_TEST_SUITE_P(single_base_deletion_at_end, traversal_test, testing::V
     .sequence_count{4u},
     .events
     {
-        shared_event_t{9u, libjst::detail::delta_kind_deletion{1}, coverage_t{0, 0, 1, 0}},
+        shared_event_t{9u, deletion_t{1}, coverage_t{0, 0, 1, 0}},
     },
     .context_size{4u}
 }));
@@ -775,7 +775,7 @@ INSTANTIATE_TEST_SUITE_P(multi_base_deletion_in_middle, traversal_test, testing:
     .sequence_count{4u},
     .events
     {
-        shared_event_t{4u, libjst::detail::delta_kind_deletion{3}, coverage_t{1, 0, 0, 1}},
+        shared_event_t{4u, deletion_t{3}, coverage_t{1, 0, 0, 1}},
     },
     .context_size{4u}
 }));
@@ -786,7 +786,7 @@ INSTANTIATE_TEST_SUITE_P(multi_base_deletion_at_begin, traversal_test, testing::
     .sequence_count{4u},
     .events
     {
-        shared_event_t{0u, libjst::detail::delta_kind_deletion{3}, coverage_t{1, 1, 0, 1}},
+        shared_event_t{0u, deletion_t{3}, coverage_t{1, 1, 0, 1}},
     },
     .context_size{4u}
 }));
@@ -797,7 +797,7 @@ INSTANTIATE_TEST_SUITE_P(multi_base_deletion_at_end, traversal_test, testing::Va
     .sequence_count{4u},
     .events
     {
-        shared_event_t{9u, libjst::detail::delta_kind_deletion{3}, coverage_t{0, 0, 1, 0}},
+        shared_event_t{9u, deletion_t{3}, coverage_t{0, 0, 1, 0}},
     },
     .context_size{4u}
 }));
@@ -808,9 +808,9 @@ INSTANTIATE_TEST_SUITE_P(multiple_deletions_at_begin, traversal_test, testing::V
     .sequence_count{4u},
     .events
     {
-        shared_event_t{0u, libjst::detail::delta_kind_deletion{4}, coverage_t{1, 0, 0, 0}},
-        shared_event_t{0u, libjst::detail::delta_kind_deletion{2}, coverage_t{0, 1, 0, 0}},
-        shared_event_t{0u, libjst::detail::delta_kind_deletion{1}, coverage_t{0, 0, 0, 1}},
+        shared_event_t{0u, deletion_t{4}, coverage_t{1, 0, 0, 0}},
+        shared_event_t{0u, deletion_t{2}, coverage_t{0, 1, 0, 0}},
+        shared_event_t{0u, deletion_t{1}, coverage_t{0, 0, 0, 1}},
     },
     .context_size{4u}
 }));
@@ -821,9 +821,9 @@ INSTANTIATE_TEST_SUITE_P(multiple_deletions_shortly_after_begin, traversal_test,
     .sequence_count{4u},
     .events
     {
-        shared_event_t{1u, libjst::detail::delta_kind_deletion{4}, coverage_t{1, 0, 0, 0}},
-        shared_event_t{2u, libjst::detail::delta_kind_deletion{2}, coverage_t{0, 1, 0, 0}},
-        shared_event_t{3u, libjst::detail::delta_kind_deletion{1}, coverage_t{0, 0, 0, 1}},
+        shared_event_t{1u, deletion_t{4}, coverage_t{1, 0, 0, 0}},
+        shared_event_t{2u, deletion_t{2}, coverage_t{0, 1, 0, 0}},
+        shared_event_t{3u, deletion_t{1}, coverage_t{0, 0, 0, 1}},
     },
     .context_size{4u}
 }));
@@ -834,9 +834,9 @@ INSTANTIATE_TEST_SUITE_P(multiple_deletions_at_end, traversal_test, testing::Val
     .sequence_count{6u},
     .events
     {
-        shared_event_t{6u, libjst::detail::delta_kind_deletion{4}, coverage_t{1, 0, 0, 0, 1, 0}},
-        shared_event_t{8u, libjst::detail::delta_kind_deletion{2}, coverage_t{0, 1, 1, 0, 0, 0}},
-        shared_event_t{9u, libjst::detail::delta_kind_deletion{1}, coverage_t{0, 0, 0, 1, 0, 0}},
+        shared_event_t{6u, deletion_t{4}, coverage_t{1, 0, 0, 0, 1, 0}},
+        shared_event_t{8u, deletion_t{2}, coverage_t{0, 1, 1, 0, 0, 0}},
+        shared_event_t{9u, deletion_t{1}, coverage_t{0, 0, 0, 1, 0, 0}},
     },
     .context_size{4u}
 }));
@@ -847,7 +847,7 @@ INSTANTIATE_TEST_SUITE_P(deletion_longer_than_context_in_middle, traversal_test,
     .sequence_count{4u},
     .events
     {
-        shared_event_t{4u, libjst::detail::delta_kind_deletion{4}, coverage_t{1, 0, 0, 1}},
+        shared_event_t{4u, deletion_t{4}, coverage_t{1, 0, 0, 1}},
     },
     .context_size{3u}
 }));
@@ -858,7 +858,7 @@ INSTANTIATE_TEST_SUITE_P(deletion_longer_than_context_at_begin, traversal_test, 
     .sequence_count{4u},
     .events
     {
-        shared_event_t{0u, libjst::detail::delta_kind_deletion{4}, coverage_t{1, 1, 0, 1}},
+        shared_event_t{0u, deletion_t{4}, coverage_t{1, 1, 0, 1}},
     },
     .context_size{3u}
 }));
@@ -869,7 +869,7 @@ INSTANTIATE_TEST_SUITE_P(deletion_longer_than_context_at_end, traversal_test, te
     .sequence_count{4u},
     .events
     {
-        shared_event_t{6u, libjst::detail::delta_kind_deletion{4}, coverage_t{0, 0, 1, 0}},
+        shared_event_t{6u, deletion_t{4}, coverage_t{0, 0, 1, 0}},
     },
     .context_size{3u}
 }));
@@ -880,7 +880,7 @@ INSTANTIATE_TEST_SUITE_P(one_sequence_deleted, traversal_test, testing::Values(t
     .sequence_count{4u},
     .events
     {
-        shared_event_t{0u, libjst::detail::delta_kind_deletion{10}, coverage_t{1, 0, 0, 0}},
+        shared_event_t{0u, deletion_t{10}, coverage_t{1, 0, 0, 0}},
     },
     .context_size{4u}
 }));
@@ -891,7 +891,7 @@ INSTANTIATE_TEST_SUITE_P(all_sequences_deleted, traversal_test, testing::Values(
     .sequence_count{4u},
     .events
     {
-        shared_event_t{0u, libjst::detail::delta_kind_deletion{10}, coverage_t{1, 1, 1, 1}},
+        shared_event_t{0u, deletion_t{10}, coverage_t{1, 1, 1, 1}},
     },
     .context_size{4u}
 }));
@@ -917,8 +917,8 @@ INSTANTIATE_TEST_SUITE_P(deletion_generating_only_one_context_in_the_middle, tra
     .sequence_count{4u},
     .events
     {
-        shared_event_t{0u, libjst::detail::delta_kind_deletion{4}, coverage_t{1, 0, 1, 0}},
-        shared_event_t{8u, libjst::detail::delta_kind_deletion{2}, coverage_t{1, 1, 0, 0}},
+        shared_event_t{0u, deletion_t{4}, coverage_t{1, 0, 1, 0}},
+        shared_event_t{8u, deletion_t{2}, coverage_t{1, 1, 0, 0}},
     },
     .context_size{4u}
 }));
@@ -953,10 +953,10 @@ INSTANTIATE_TEST_SUITE_P(deletion_generating_only_one_split_context, traversal_t
     .sequence_count{8u},
     .events
     {
-        shared_event_t{0u, libjst::detail::delta_kind_deletion{2}, coverage_t{1, 1, 1, 1, 0, 0, 0, 0}},
-        shared_event_t{3u, libjst::detail::delta_kind_deletion{1}, coverage_t{1, 1, 0, 0, 1, 1, 0, 0}},
-        shared_event_t{6u, libjst::detail::delta_kind_deletion{2}, coverage_t{1, 0, 1, 0, 1, 0, 1, 0}},
-        shared_event_t{9u, libjst::detail::delta_kind_deletion{1}, coverage_t{1, 1, 0, 0, 0, 1, 1, 0}},
+        shared_event_t{0u, deletion_t{2}, coverage_t{1, 1, 1, 1, 0, 0, 0, 0}},
+        shared_event_t{3u, deletion_t{1}, coverage_t{1, 1, 0, 0, 1, 1, 0, 0}},
+        shared_event_t{6u, deletion_t{2}, coverage_t{1, 0, 1, 0, 1, 0, 1, 0}},
+        shared_event_t{9u, deletion_t{1}, coverage_t{1, 1, 0, 0, 0, 1, 1, 0}},
     },
     .context_size{4u}
 }));
@@ -993,11 +993,11 @@ INSTANTIATE_TEST_SUITE_P(larger_deletion_overlaps_smaller_deletions, traversal_t
     .sequence_count{9u},
     .events
     {
-        shared_event_t{0u, libjst::detail::delta_kind_deletion{2}, coverage_t{1, 1, 1, 1, 0, 0, 0, 0, 0}},
-        shared_event_t{2u, libjst::detail::delta_kind_deletion{6}, coverage_t{0, 0, 0, 0, 0, 0, 1, 1, 0}},
-        shared_event_t{3u, libjst::detail::delta_kind_deletion{1}, coverage_t{1, 1, 0, 0, 1, 1, 0, 0, 0}},
-        shared_event_t{6u, libjst::detail::delta_kind_deletion{2}, coverage_t{1, 0, 1, 0, 1, 0, 0, 0, 0}},
-        shared_event_t{9u, libjst::detail::delta_kind_deletion{1}, coverage_t{1, 1, 0, 0, 0, 1, 0, 1, 0}},
+        shared_event_t{0u, deletion_t{2}, coverage_t{1, 1, 1, 1, 0, 0, 0, 0, 0}},
+        shared_event_t{2u, deletion_t{6}, coverage_t{0, 0, 0, 0, 0, 0, 1, 1, 0}},
+        shared_event_t{3u, deletion_t{1}, coverage_t{1, 1, 0, 0, 1, 1, 0, 0, 0}},
+        shared_event_t{6u, deletion_t{2}, coverage_t{1, 0, 1, 0, 1, 0, 0, 0, 0}},
+        shared_event_t{9u, deletion_t{1}, coverage_t{1, 1, 0, 0, 0, 1, 0, 1, 0}},
     },
     .context_size{4u}
 }));
