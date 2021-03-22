@@ -28,6 +28,7 @@ using alphabet_t = char;
 using shared_event_t = libjst::detail::delta_event_shared<alphabet_t>;
 using delta_event_t = typename shared_event_t::delta_event_type;
 using substitution_t = typename shared_event_t::substitution_type;
+using insertion_t = typename shared_event_t::insertion_type;
 using coverage_t = typename shared_event_t::coverage_type;
 using jst_events_t = std::vector<shared_event_t>;
 
@@ -515,4 +516,217 @@ testing::Values(traversal_fixture
         shared_event_t{11u, substitution_t{"g"s}, coverage_t{1, 1, 0, 0}},
     },
     .context_size{1u}
+}));
+
+// ----------------------------------------------------------------------------
+// Test insertions
+// ----------------------------------------------------------------------------
+
+INSTANTIATE_TEST_SUITE_P(single_base_insertion, traversal_test, testing::Values(traversal_fixture
+{
+    //
+    //          0123 4567
+    //          aaaa aaaa
+    // 00:      aaaa          [0, 0, 0, 0]
+    // 01:       aaab         [1, 0, 1, 0]
+    // 02:        aaba        [2, 0, 2, 0]
+    // 03:         abaa       [3, 0, 3, 0]
+    // 04:          baaa      [4, 0, 4, 0]
+    // 05:       aaa a        [0, 1, 0, 1]
+    // 06:        aa aa       [0, 2, 0, 2]
+    // 07:         a aaa      [0, 3, 0, 3]
+    // 08:           aaaa     [5, 4, 5, 4]
+    .reference{"aaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{4u, insertion_t{"b"s}, coverage_t{1, 0, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(single_base_insertion_at_begin, traversal_test, testing::Values(traversal_fixture
+{
+    //
+    //          01234567
+    //          aaaaaaaa
+    // 00:     baaa         [0, -, -, 0]
+    // 01:      aaaa        [1, 0, 0, 1]
+    // 02:       aaaa       [2, 1, 1, 2]
+    // 03:        aaaa      [3, 2, 2, 3]
+    // 04:         aaaa     [4, 3, 3, 4]
+    // 05:          aaaa    [5, 4, 4, 5]
+    .reference{"aaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{0u, insertion_t{"b"s}, coverage_t{1, 0, 0, 1}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(single_base_insertion_at_end, traversal_test, testing::Values(traversal_fixture
+{
+    //
+    //          01234567
+    //          aaaaaaaa
+    // 00:      aaaa          [0, 0, 0, 0]
+    // 01:       aaaa         [1, 1, 1, 1]
+    // 02:        aaaa        [2, 2, 2, 2]
+    // 03:         aaaa       [3, 3, 3, 3]
+    // 04:          aaaa      [4, 4, 4, 4]
+    // 05:           aaab     [5, -, -, 5]
+    .reference{"aaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{8u, insertion_t{"b"s}, coverage_t{1, 0, 0, 1}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(multiple_insertions_at_end, traversal_test, testing::Values(traversal_fixture
+{
+    //          01234567
+    //          aaaaaaaa
+    // 00:      aaaa               [  0,  0,  0,  0]
+    // 01:       aaaa              [  1,  1,  1,  1]
+    // 02:        aaaa             [  2,  2,  2,  2]
+    // 03:         aaaa            [  3,  3,  3,  3]
+    // 04:          aaaa           [  4,  4,  4,  4]
+    // 05:           aaab          [  5,  -,  -,  -]
+    // 06:           aaac          [  -,  5,  -,  -]
+    // 07:            aacc         [  -,  6,  -,  -]
+    // 08:             accc        [  -,  7,  -,  -]
+    // 09:              cccc       [  -,  8,  -,  -]
+    // 10:           aaad          [  -,  -,  5,  -]
+    // 11:            aadd         [  -,  -,  6,  -]
+    // 12:             addd        [  -,  -,  7,  -]
+    // 13:              dddd       [  -,  -,  8,  -]
+    // 14:               dddd      [  -,  -,  9,  -]
+    // 15:                dddd     [  -,  -, 10,  -]
+    // 16:                 dddd    [  -,  -, 11,  -]
+    // 17:                  dddd   [  -,  -, 12,  -]
+    .reference{"aaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{8u, insertion_t{"b"s}, coverage_t{1, 0, 0, 0}},
+        shared_event_t{8u, insertion_t{"cccc"s}, coverage_t{0, 1, 0, 0}},
+        shared_event_t{8u, insertion_t{"dddddddd"s}, coverage_t{0, 0, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(multiple_insertions_overlap, traversal_test, testing::Values(traversal_fixture
+{
+    //      0   12345678901234567 89
+    //  0:  b___aaddddddddaaaeeea_aagggg
+    //  1:  ccccaaddddddddaaa___a_aa____
+    //  2:  ____aaddddddddaaaeeeafaagggg
+    //  3:  ____aa________aaaeeeafaa____
+
+    //          01        234   5 67
+    //      ____aa________aaa___a_aa
+    //      b
+    //      cccc
+    //            dddddddd
+    //                       eee
+    //                           f
+    //                              gggg
+    // 00:  b___aadd                      [ 0,  -,  -,  -]
+    // 01:  cccca                         [ -,  0,  -,  -]
+    // 02:   cccaa                        [ -,  1,  -,  -]
+    // 03:    ccaad                       [ -,  2,  -,  -]
+    // 04:     caadd                      [ -,  3,  -,  -]
+    // 05:      aaddd                     [ 1,  4,  0,  -]
+    // 06:       adddd                    [ 2,  5,  1,  -]
+    // 07:        ddddd                   [ 3,  6,  2,  -]
+    // 08:         ddddd                  [ 4,  7,  3,  -]
+    // 09:          ddddd                 [ 5,  8,  4,  -]
+    // 10:           ddddd                [ 6,  9,  5,  -]
+    // 11:            dddda               [ 7, 10,  6,  -]
+    // 12:             dddaa              [ 8, 11,  7,  -]
+    // 13:              ddaaa             [ 9, 12,  8,  -]
+    // 14:               daaae            [10,  -,  9,  -]
+    // 15:               daaa___a         [ -, 13,  -,  -]
+    // 16:      aa________aaa             [ -,  -,  -,  0]
+    // 17:       a________aaae            [ -,  -,  -,  1]
+    // 18:                aaaee           [11,  -, 10,  2]
+    // 19:                 aaeee          [12,  -, 11,  3]
+    // 20:                  aeeea         [13,  -, 12,  4]
+    // 21:                   eeeaf        [ -,  -, 13,  5]
+    // 22:                    eeafa       [ -,  -, 14,  6]
+    // 23:                     eafaa      [ -,  -, 15,  7]
+    // 24:                   eeea_a       [14,  -,  -,  -]
+    // 25:                    eea_aa      [15,  -,  -,  -]
+    // 26:                     ea_aag     [16,  -,  -,  -]
+    // 27:       a________aaa___a         [ -,  -,  -,  -]
+    // 28:                aaa___af        [ -,  -,  -,  -]
+    // 29:                 aa___afa       [ -,  -,  -,  -]
+    // 30:                  a___afaa      [ -,  -,  -,  -]
+    // 31:                      afaag     [ -,  -, 16,  -]
+    // 32:                       faagg    [ -,  -, 17,  -]
+    // 33:                aaa___a_a       [ -, 14,  -,  -]
+    // 34:                 aa___a_aa      [ -, 15,  -,  -]
+    // 35:                  a___a_aag     [ -,  -,  -,  -]
+    // 36:                      a_aagg    [17,  -,  -,  -]
+    // 37:                        aaggg   [18,  -, 18,  -]
+    // 38:                         agggg  [19,  -, 19,  -]
+
+    .reference{"aaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{0u, insertion_t{"b"s}, coverage_t{1, 0, 0, 0}},
+        shared_event_t{0u, insertion_t{"cccc"s}, coverage_t{0, 1, 0, 0}},
+        shared_event_t{2u, insertion_t{"dddddddd"s}, coverage_t{1, 1, 1, 0}},
+        shared_event_t{5u, insertion_t{"eee"s}, coverage_t{1, 0, 1, 1}},
+        shared_event_t{6u, insertion_t{"f"s}, coverage_t{0, 0, 1, 1}},
+        shared_event_t{8u, insertion_t{"gggg"s}, coverage_t{1, 0, 1, 0}},
+    },
+    .context_size{5u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(insertion_to_get_exactly_one_context, traversal_test, testing::Values(traversal_fixture
+{
+    //       0 12
+    //      bacaad
+    //  0:  bacaad
+    //  1:  ba_aa_
+    //  2:  _acaa_
+    //  3:  _a_aad
+    //  4:  _a_aa_
+
+    // 00:  bacaad   [ 0,  -,  -,  -]
+    // 01:  bacaa_   // unsupported
+    // 02:  ba_aad   // unsupported
+    // 03:  ba_aa_   // unsupported
+    // 04:  _acaad   // unsupported
+    // 05:  _acaa_   // unsupported
+    // 06:  _a_aad   // unsupported
+    // 07:  _a_aa_   // unsupported
+
+    .reference{"aaa"s},
+    .sequence_count{5u},
+    .events
+    {
+        shared_event_t{0u, insertion_t{"b"s}, coverage_t{1, 1, 0, 0, 0}},
+        shared_event_t{1u, insertion_t{"c"s}, coverage_t{1, 0, 1, 0, 0}},
+        shared_event_t{3u, insertion_t{"d"s}, coverage_t{1, 0, 0, 1, 0}},
+    },
+    .context_size{6u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(multiple_insertions_into_empty_reference, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{""s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{0u, insertion_t{"b"s}, coverage_t{1, 0, 0, 0}},
+        shared_event_t{0u, insertion_t{"cccc"s}, coverage_t{0, 1, 0, 0}},
+        shared_event_t{0u, insertion_t{"dddddddd"s}, coverage_t{0, 0, 1, 0}},
+    },
+    .context_size{4u}
 }));
