@@ -15,6 +15,8 @@
 #include <compare>
 #include <vector>
 
+#include <cereal/types/base_class.hpp>
+
 #include <seqan3/alphabet/concept.hpp>
 
 #include <libjst/detail/delta_event.hpp>
@@ -114,6 +116,34 @@ public:
 
     //!\brief Compares for equality with other delta events.
     bool operator==(delta_event_shared const &) const = default;
+    //!\}
+
+    /*!\name Serialisation
+     * \{
+     */
+    /*!\brief Saves this shared delta event to the given output archive.
+     *
+     * \tparam output_archive_t The type of the output_archive; must model seqan3::cereal_output_archive.
+     *
+     * \param[in, out] archive The archive to serialise this object to.
+     */
+    template <seqan3::cereal_output_archive output_archive_t>
+    void save(output_archive_t & archive) const
+    {
+        archive(cereal::base_class<base_event_t>(this), _coverage);
+    }
+
+    /*!\brief Loads this shared delta event from the given input archive.
+     *
+     * \tparam input_archive_t The type of the input_archive; must model seqan3::cereal_input_archive.
+     *
+     * \param[in, out] archive The archive to serialise this object from.
+     */
+    template <seqan3::cereal_input_archive input_archive_t>
+    void load(input_archive_t & archive)
+    {
+        archive(cereal::base_class<base_event_t>(this), _coverage);
+    }
     //!\}
 };
 

@@ -15,6 +15,8 @@
 #include <algorithm>
 #include <vector>
 
+#include <cereal/types/vector.hpp>
+
 namespace libjst::utility
 {
 

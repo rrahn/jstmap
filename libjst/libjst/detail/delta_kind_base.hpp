@@ -77,11 +77,11 @@ public:
     /*!\name Serialisation
      * \{
      */
-    /*!\brief Saves the delta kind to the given output archive.
+    /*!\brief Saves this delta kind to the given output archive.
      *
      * \tparam output_archive_t The type of the output_archive; must model seqan3::cereal_output_archive.
      *
-     * \param[in] archive The archive to serialise this object to.
+     * \param[in, out] archive The archive to serialise this object to.
      */
     template <seqan3::cereal_output_archive output_archive_t>
     void save(output_archive_t & archive) const
@@ -89,11 +89,11 @@ public:
         archive(_value);
     }
 
-    /*!\brief Loads the delta kind from the given input archive.
+    /*!\brief Loads this delta kind from the given input archive.
      *
      * \tparam input_archive_t The type of the input_archive; must model seqan3::cereal_input_archive.
      *
-     * \param[in] archive The archive to serialise this object from.
+     * \param[in, out] archive The archive to serialise this object from.
      */
     template <seqan3::cereal_input_archive input_archive_t>
     void load(input_archive_t & archive)
