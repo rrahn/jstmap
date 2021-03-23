@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <cereal/types/base_class.hpp>
+
 #include <libjst/detail/delta_kind_base.hpp>
 
 namespace libjst::detail
@@ -41,6 +43,24 @@ public:
 
     //!\brief Compare against other deletions for equality.
     bool operator==(delta_kind_deletion const &) const = default;
+
+    /*!\name Serialisation
+     * \{
+     */
+    //!\copydoc libjst::detail::delta_kind_base::save
+    template <seqan3::cereal_output_archive output_archive_t>
+    void save(output_archive_t & archive) const
+    {
+        archive(cereal::base_class<delta_kind_base<size_t>>(this));
+    }
+
+    //!\copydoc libjst::detail::delta_kind_base::load
+    template <seqan3::cereal_input_archive input_archive_t>
+    void load(input_archive_t & archive)
+    {
+        archive(cereal::base_class<delta_kind_base<size_t>>(this));
+    }
+    //!\}
 };
 
 }  // namespace libjst::detail

@@ -14,6 +14,9 @@
 
 #include <vector>
 
+#include <cereal/types/base_class.hpp>
+#include <cereal/types/vector.hpp>
+
 #include <seqan3/alphabet/concept.hpp>
 #include <seqan3/range/concept.hpp>
 
@@ -55,6 +58,24 @@ public:
 
     //!\brief Compare against other insertions for equality.
     bool operator==(delta_kind_insertion const &) const = default;
+
+    /*!\name Serialisation
+     * \{
+     */
+    //!\copydoc libjst::detail::delta_kind_base::save
+    template <seqan3::cereal_output_archive output_archive_t>
+    void save(output_archive_t & archive) const
+    {
+        archive(cereal::base_class<base_t>(this));
+    }
+
+    //!\copydoc libjst::detail::delta_kind_base::load
+    template <seqan3::cereal_input_archive input_archive_t>
+    void load(input_archive_t & archive)
+    {
+        archive(cereal::base_class<base_t>(this));
+    }
+    //!\}
 };
 
 /*!\name Type deduction guide

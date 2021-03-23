@@ -14,6 +14,8 @@
 
 #include <vector>
 
+#include <cereal/types/variant.hpp>
+
 #include <seqan3/alphabet/concept.hpp>
 #include <seqan3/core/detail/debug_stream_type.hpp>
 #include <seqan3/core/detail/template_inspection.hpp>
@@ -194,6 +196,34 @@ public:
     std::weak_ordering operator<=>(delta_event const & rhs) const noexcept
     {
         return position() <=> rhs.position();
+    }
+    //!\}
+
+    /*!\name Serialisation
+     * \{
+     */
+    /*!\brief Saves this delta event to the given output archive.
+     *
+     * \tparam output_archive_t The type of the output_archive; must model seqan3::cereal_output_archive.
+     *
+     * \param[in] archive The archive to serialise this object to.
+     */
+    template <seqan3::cereal_output_archive output_archive_t>
+    void save(output_archive_t & archive) const
+    {
+        archive(_position, _delta_variant);
+    }
+
+    /*!\brief Loads this delta event from the given input archive.
+     *
+     * \tparam input_archive_t The type of the input_archive; must model seqan3::cereal_input_archive.
+     *
+     * \param[in] archive The archive to serialise this object from.
+     */
+    template <seqan3::cereal_input_archive input_archive_t>
+    void load(input_archive_t & archive)
+    {
+        archive(_position, _delta_variant);
     }
     //!\}
 

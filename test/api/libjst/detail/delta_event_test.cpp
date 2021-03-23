@@ -7,6 +7,8 @@
 
 #include <gtest/gtest.h>
 
+#include <cereal/archives/json.hpp> // output archive for testing
+
 #include <seqan3/alphabet/adaptation/char.hpp>
 #include <seqan3/test/expect_range_eq.hpp>
 
@@ -15,6 +17,56 @@
 struct delta_operation_fixture : public ::testing::Test
 {
     using delta_event_t = libjst::detail::delta_event<char>;
+
+    static constexpr std::string_view expected_substitution_archive =
+R"json({
+    "value0": 23,
+    "value1": {
+        "index": 1,
+        "data": {
+            "value0": {
+                "value0": [
+                    97,
+                    98,
+                    99,
+                    100
+                ]
+            }
+        }
+    }
+})json";
+
+    static constexpr std::string_view expected_insertion_archive =
+R"json({
+    "value0": 5,
+    "value1": {
+        "index": 0,
+        "data": {
+            "value0": {
+                "value0": [
+                    105,
+                    106,
+                    107,
+                    108,
+                    109
+                ]
+            }
+        }
+    }
+})json";
+
+    static constexpr std::string_view expected_deletion_archive =
+R"json({
+    "value0": 100,
+    "value1": {
+        "index": 2,
+        "data": {
+            "value0": {
+                "value0": 10
+            }
+        }
+    }
+})json";
 };
 
 TEST_F(delta_operation_fixture, basic_construction)
@@ -189,4 +241,91 @@ TEST_F(delta_operation_fixture, stream)
         sstream << op;
         EXPECT_EQ(sstream.str(), "(10, del: 3)"s);
     }
+}
+
+TEST_F(delta_operation_fixture, save_substitution)
+{
+    using namespace std::literals;
+    std::stringstream archive_stream{};
+
+    delta_event_t substitution_event{23u, libjst::detail::delta_kind_substitution{"abcd"s}};
+
+    {
+        cereal::JSONOutputArchive output_archive(archive_stream);
+        substitution_event.save(output_archive);
+    }
+
+    EXPECT_EQ(archive_stream.str(), expected_substitution_archive);
+}
+
+TEST_F(delta_operation_fixture, save_insertion)
+{
+    using namespace std::literals;
+    std::stringstream archive_stream{};
+
+    delta_event_t insertion_event{5u, libjst::detail::delta_kind_insertion{"ijklm"s}};
+
+    {
+        cereal::JSONOutputArchive output_archive(archive_stream);
+        insertion_event.save(output_archive);
+    }
+
+    EXPECT_EQ(archive_stream.str(), expected_insertion_archive);
+}
+
+TEST_F(delta_operation_fixture, save_deletion)
+{
+    std::stringstream archive_stream{};
+
+    delta_event_t deletion_event{100u, libjst::detail::delta_kind_deletion{10}};
+
+    {
+        cereal::JSONOutputArchive output_archive(archive_stream);
+        deletion_event.save(output_archive);
+    }
+
+    EXPECT_EQ(archive_stream.str(), expected_deletion_archive);
+}
+
+TEST_F(delta_operation_fixture, load_substitution)
+{
+    using namespace std::literals;
+
+    std::stringstream archive_stream{expected_substitution_archive.data()};
+
+    delta_event_t substitution_event{};
+    {
+        cereal::JSONInputArchive input_archive(archive_stream);
+        substitution_event.load(input_archive);
+    }
+
+    EXPECT_EQ(substitution_event, (delta_event_t{23u, libjst::detail::delta_kind_substitution{"abcd"s}}));
+}
+
+TEST_F(delta_operation_fixture, load_insertion)
+{
+    using namespace std::literals;
+
+    std::stringstream archive_stream{expected_insertion_archive.data()};
+
+    delta_event_t insertion_event{};
+    {
+        cereal::JSONInputArchive input_archive(archive_stream);
+        insertion_event.load(input_archive);
+    }
+
+    EXPECT_EQ(insertion_event, (delta_event_t{5u, libjst::detail::delta_kind_insertion{"ijklm"s}}));
+}
+
+TEST_F(delta_operation_fixture, load_deletion)
+{
+    std::stringstream archive_stream{expected_deletion_archive.data()};
+
+    delta_event_t deletion_event{};
+    {
+        cereal::JSONInputArchive input_archive(archive_stream);
+        deletion_event.load(input_archive);
+    }
+
+    EXPECT_EQ(deletion_event, (delta_event_t{100u, libjst::detail::delta_kind_deletion{10}}));
 }
