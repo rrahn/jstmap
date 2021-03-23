@@ -61,8 +61,15 @@ public:
     //!\}
 
 private:
-    //!\brief Returns the position + the deletion size of the wrapped delta event.
-    size_type position_impl() const noexcept
+
+    //!\copydoc libjst::detail::journal_sequence_tree_event_base::delta_index
+    constexpr size_t delta_index_impl() const noexcept
+    {
+        return 2u - base_t::event_handle()->delta_variant().index();
+    }
+
+    //!\copydoc libjst::detail::journal_sequence_tree_event_base::poisition
+    constexpr size_type position_impl() const noexcept
     {
         assert(base_t::_delta_event != nullptr);
 

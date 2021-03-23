@@ -132,7 +132,7 @@ TEST_P(jst_event_test, equality)
     EXPECT_NE(test_event, event_pointing_to_another_address);
 }
 
-TEST_P(jst_event_test, ordering_by_event)
+TEST_P(jst_event_test, ordering_by_different_event_position)
 {
     // Create an event that is greater than the given one but assume that the event position is less than the maximal
     // number of size_t.
@@ -153,6 +153,73 @@ TEST_P(jst_event_test, ordering_by_event)
         EXPECT_GT(event_pointing_to_greater_event, test_event);
         EXPECT_GE(event_pointing_to_same_event, test_event);
         EXPECT_GE(test_event, test_event);
+    }
+}
+
+TEST_P(jst_event_test, ordering_by_same_event_position_with_different_delta_kind)
+{
+    using namespace std::literals;
+
+    // Create events of different delta kinds at the same position and compare ordering of jst events based
+    // on the delta kind, i.e. insertion < substitution < deletion for branch events and
+    // deletion < substitution < insertion for join events.
+    // The following events for comparison are adapted such that they have the same position as the test event.
+    // Note that the join event position is position of the delta event + deletion size.
+    bool const is_join_event = test_event.index() == 1;
+    libjst::detail::test::shared_delta_event_t insertion_event{expected_position,
+                                                               libjst::detail::test::insertion_t{"a"s},
+                                                               expected_event.coverage()};
+    jst_event_variant_t event_to_insertion = get_testable_event(std::addressof(insertion_event));
+
+    libjst::detail::test::shared_delta_event_t deletion_event{expected_position - (is_join_event ? 1 : 0),
+                                                              libjst::detail::test::deletion_t{1},
+                                                              expected_event.coverage()};
+    jst_event_variant_t event_to_deletion = get_testable_event(std::addressof(deletion_event));
+
+    libjst::detail::test::shared_delta_event_t substitution_event{expected_position - (is_join_event ? 1 : 0),
+                                                                  libjst::detail::test::substitution_t{"a"s},
+                                                                  expected_event.coverage()};
+    jst_event_variant_t event_to_substitution = get_testable_event(std::addressof(substitution_event));
+
+    // The set index of the delta variant of the test event: 0 = insertion, 1 = substitution, 2 = deletion
+    int32_t const test_index = apply(test_event, [] (auto & e) { return e.event_handle(); })->delta_variant().index();
+
+    // Returns the result of invoking either cmp_branch or cmp_join with the test index and the expected one.
+    auto with_index = [&] (auto cmp_branch, auto cmp_join, int32_t expected_index)
+    {
+        return (is_join_event) ? cmp_join(test_index, expected_index) : cmp_branch(test_index, expected_index);
+    };
+
+    { // less and less equal
+        EXPECT_EQ(std::as_const(test_event) < event_to_insertion,
+                  with_index(std::less<int32_t>{}, std::greater<int32_t>{}, 0));
+        EXPECT_EQ(std::as_const(test_event) < event_to_substitution,
+                  with_index(std::less<int32_t>{}, std::greater<int32_t>{}, 1));
+        EXPECT_EQ(std::as_const(test_event) < event_to_deletion,
+                  with_index(std::less<int32_t>{}, std::greater<int32_t>{}, 2));
+
+        EXPECT_EQ(std::as_const(test_event) <= event_to_insertion,
+                  with_index(std::less_equal<int32_t>{}, std::greater_equal<int32_t>{}, 0));
+        EXPECT_EQ(std::as_const(test_event) <= event_to_substitution,
+                  with_index(std::less_equal<int32_t>{}, std::greater_equal<int32_t>{}, 1));
+        EXPECT_EQ(std::as_const(test_event) <= event_to_deletion,
+                  with_index(std::less_equal<int32_t>{}, std::greater_equal<int32_t>{}, 2));
+    }
+
+    { // greater and greater equal
+        EXPECT_EQ(std::as_const(test_event) > event_to_insertion,
+                  with_index(std::greater<int32_t>{}, std::less<int32_t>{}, 0));
+        EXPECT_EQ(std::as_const(test_event) > event_to_substitution,
+                  with_index(std::greater<int32_t>{}, std::less<int32_t>{}, 1));
+        EXPECT_EQ(std::as_const(test_event) > event_to_deletion,
+                  with_index(std::greater<int32_t>{}, std::less<int32_t>{}, 2));
+
+        EXPECT_EQ(std::as_const(test_event) >= event_to_insertion,
+                  with_index(std::greater_equal<int32_t>{}, std::less_equal<int32_t>{}, 0));
+        EXPECT_EQ(std::as_const(test_event) >= event_to_substitution,
+                  with_index(std::greater_equal<int32_t>{}, std::less_equal<int32_t>{}, 1));
+        EXPECT_EQ(std::as_const(test_event) >= event_to_deletion,
+                  with_index(std::greater_equal<int32_t>{}, std::less_equal<int32_t>{}, 2));
     }
 }
 

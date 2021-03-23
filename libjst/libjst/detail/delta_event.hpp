@@ -51,7 +51,8 @@ public:
     using alphabet_type = alphabet_t; //!< The alphabet type.
     using segment_type = std::span<alphabet_type const>; //!< The segment type.
     using size_type = size_t; //!< The size type.
-    using delta_variant_type = std::variant<substitution_type, insertion_type, deletion_type>; //!< The delta variant type.
+    //!\brief The variant type over the three different delta kinds.
+    using delta_variant_type = std::variant<insertion_type, substitution_type, deletion_type>;
     //!\}
 
 private:

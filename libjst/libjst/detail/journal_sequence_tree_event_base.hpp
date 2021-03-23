@@ -68,7 +68,15 @@ public:
         return _delta_event->coverage();
     }
 
-    //!\brief Returns the position of the wrapped delta event.
+    /*!\brief Returns the position of the wrapped delta event.
+     *
+     * \returns The position of the event.
+     *
+     * \details
+     *
+     * The branch event position corresponds to the position of the wrapped delta event, while the join event position
+     * corresponds to the position of the wrapped delta event plus the deletion size of this event.
+     */
     constexpr size_type position() const noexcept
     {
         return as_derived().position_impl();
@@ -96,10 +104,24 @@ public:
         return event_handle() == rhs.event_handle();
     }
 
-    //!\brief Compares the wrapped events by their position.
+    /*!\brief Compares the wrapped events by their position.
+     *
+     * \param[in] rhs The right hand side of the comparison.
+     *
+     * \returns std::weak_ordering
+     *
+     * \details
+     *
+     * Compares the position of `this` with the position of `rhs`. If both positions are equivalent, the order depends
+     * on the delta kind. In the branch event the order is `insertion < substitution < deletion` and in the join event
+     * the order is `deletion < substitution < insertion`.
+     */
     constexpr std::weak_ordering operator<=>(journal_sequence_tree_event_base const & rhs) const noexcept
     {
-        return position() <=> rhs.position();
+        if (std::weak_ordering ordering = position() <=> rhs.position(); ordering == std::weak_ordering::equivalent)
+            return delta_index() <=> rhs.delta_index();
+        else
+            return ordering;
     }
 
     //!\brief Compares the wrapped event with another position.
@@ -110,6 +132,23 @@ public:
     //!\}
 
 private:
+    /*!\brief Returns the possibly modified index of the delta variant of the wrapped delta event.
+     *
+     * \details
+     *
+     * The table shows the index returned by this method depending on the delta kind and the event type:
+     *
+     * |   delta kind  | branch event | join event |
+     * |---------------|--------------|------------|
+     * | insertion     |      0       |      2     |
+     * | substitution  |      1       |      1     |
+     * | deletion      |      2       |      0     |
+     */
+    constexpr size_t delta_index() const noexcept
+    {
+        return as_derived().delta_index_impl();
+    }
+
     //!\brief Returns this casted to the derived type.
     derived_t & as_derived()
     {
