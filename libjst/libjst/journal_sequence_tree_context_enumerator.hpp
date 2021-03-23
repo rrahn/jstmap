@@ -16,7 +16,6 @@
 #include <numeric>
 #include <ranges>
 
-#include <seqan3/core/debug_stream.hpp>
 #include <seqan3/range/views/slice.hpp>
 #include <seqan3/range/views/zip.hpp>
 
@@ -260,15 +259,6 @@ private:
     //!\brief Makes a new branch at the current position and switches to this branch.
     branch_creation_status create_branch()
     {
-        // using signed_size_t = std::make_signed_t<size_type>;
-        // TODO: Better logging
-        // seqan3::debug_stream << "DEBUG: Create new branch.\n";
-        // std::cout << "DEBUG: From base branch: " << std::boolalpha << is_base_branch() << "\n";
-        // seqan3::debug_stream << "DEBUG: Branch coverage: ";
-        //     print_event_info(active_branch().branch_event_it, [] (auto event) { return event.coverage(); }) << "\n";
-        // seqan3::debug_stream << "DEBUG: Branch position: ";
-        //     print_event_info(active_branch().branch_event_it, [] (auto event) { return event.position(); }) << "\n";
-
         assert(!at_end());
         assert(active_branch().branch_event_it != std::ranges::end(branch_event_queue()));
         assert(on_branch_event());
@@ -302,7 +292,11 @@ private:
 
         new_branch.branch_event_it = find_next_relative_branch_event(new_branch);
 
-        if (bool is_deletion = new_branch.delta_event->is_deletion(); is_deletion && new_branch.at_end())
+        // Only return with no support if this branch is a deletion and is at end of the branch because the deletion
+        // is at the end of the reference sequence. But try again if there are more events left, because there could
+        // be an insertion at the end of the branch such that it is extended with a valid context.
+        if (bool is_deletion = new_branch.delta_event->is_deletion(); is_deletion &&
+            (new_branch.at_end() && !has_more_branch_events(new_branch)))
         {
             return branch_creation_status::no_support;
         }
@@ -332,7 +326,7 @@ private:
         {
             return active_branch().at_end() &&
                    (active_branch().branch_end_position == branch_max_end_position() ||
-                   !branch_has_more_branch_events());
+                   !has_more_branch_events(active_branch()));
         };
 
         // Drop all visited or unsupported branches except the base branch.
@@ -392,7 +386,7 @@ private:
     {
         // Either there are no branches left or the context postion is equal to the postion of the branch event
         // relative to the position of the active branch.
-        return branch_has_more_branch_events() &&
+        return has_more_branch_events(active_branch()) &&
                active_branch().context_position == active_branch().relative_branch_event_position();
     }
 
@@ -432,11 +426,13 @@ private:
 
     /*!\brief Tests wether the active branch has more branch events left.
      *
+     * \param[in] branch The branch to check if it has more branch events.
+     *
      * \returns `true` if the branch iterator is not at the end of the branch queue, `false` otherwise.
      */
-    bool branch_has_more_branch_events() const noexcept
+    bool has_more_branch_events(branch const & branch) const noexcept
     {
-        return active_branch().branch_event_it != std::ranges::end(branch_event_queue());
+        return branch.branch_event_it != std::ranges::end(branch_event_queue());
     }
 
     //!\brief Returns the begin position of the context in the active branch.
@@ -518,11 +514,14 @@ private:
      */
     void update_relative_sequence_offsets() noexcept
     {
+        // Little helper lambda to check if there is really a join event before the current head of the context
         auto is_join_event_before_context_head = [&] ()
         {
             return _join_event_it != std::ranges::end(join_event_queue()) &&
                     context_begin_position() >= _join_event_it->position() &&
-                    (is_base_branch() || context_begin_position() < branch_position());
+                    (is_base_branch() || // Always in base branch.
+                     (context_begin_position() <= branch_position() && // In branch only if context position is less &
+                      _join_event_it->event_handle() != _branch_stack.branch_at(1).delta_event)); // not the same event.
         };
 
         for (; has_full_context_in_branch() && is_join_event_before_context_head(); ++_join_event_it)
@@ -548,8 +547,35 @@ private:
                    context_begin_position() == active_branch().join_event_it->position();
         };
 
-        for (; is_base_branch() && head_on_join_event(); ++active_branch().join_event_it)
-            active_branch().coverage |= active_branch().join_event_it->coverage();
+        if (is_base_branch() && head_on_join_event())
+        {
+
+            for (; head_on_join_event(); ++active_branch().join_event_it)
+                active_branch().coverage |= active_branch().join_event_it->coverage();
+
+            // In the base branch the coverage needs to be refined. When joining delta events the coverage will
+            // be updated accordingly, which might overwrite a particular bit in the coverage that was previously
+            // unset by another delta event that lies inside of the current context of the base branch.
+
+            // The branch_event_it points to the first branch event that lies behind the tail of the current context.
+            // Go back to find first branch event that does not affect the coverage of the current context.
+            auto first_it = std::ranges::find_if(std::reverse_iterator{active_branch().branch_event_it},
+                                                 std::reverse_iterator{std::ranges::begin(branch_event_queue())},
+                                                 [&] (auto const & event)
+            {
+                return (event.event_handle()->is_insertion() && event.position() == context_begin_position()) ||
+                       (event.position() < context_begin_position());
+            }).base();
+
+            assert(first_it == std::ranges::end(branch_event_queue()) ||
+                   first_it->position() >= context_begin_position());
+
+            // Now determine the supported coverage within this context.
+            std::ranges::for_each(first_it, active_branch().branch_event_it, [&] (auto const & branch_event)
+            {
+                active_branch().coverage &= ~branch_event.coverage();
+            });
+        }
     }
 
     /*!\brief Advances to the next context.
@@ -588,7 +614,7 @@ private:
         assert(is_base_branch() || active_branch().coverage.any());
 
         // Drop the base branch if fully consumed as well.
-        if (is_base_branch() && active_branch().at_end() && !branch_has_more_branch_events())
+        if (is_base_branch() && active_branch().at_end() && !has_more_branch_events(active_branch()))
             drop_branch();
 
         return at_end() || has_full_context_in_branch();
@@ -620,46 +646,11 @@ private:
      */
     coverage_type determine_supported_context_coverage() noexcept
     {
-        // Early support stopped.
-        if (branch_event_queue().empty() || (!is_base_branch() && context_begin_position() >= branch_position()))
+        // Just use coverage in these cases.
+        if (branch_event_queue().empty() || is_base_branch() || context_begin_position() >= branch_position())
             return active_branch().coverage;
 
-        // Helper function to get the supported coverage for the given range of branch or join events.
-        auto supported_coverage_in = [&] (auto begin, auto end) -> coverage_type
-        {
-            coverage_type unsupported =
-                std::accumulate(begin, end, coverage_type(_sequence_offsets.size(), false),
-                                [] (coverage_type coverage, auto const & event)
-            {
-                return coverage | event.coverage();
-            });
-
-            return active_branch().coverage & ~unsupported;
-        };
-
-        // In the base branch the coverage needs to be refined. When joining delta events the coverage will
-        // be updated accordingly, which might overwrite a particular bit in the coverage that was previously
-        // unset by another delta event that lies inside of the current context of the base branch.
-        if (is_base_branch())
-        {
-            // The branch_event_it points to the first branch event that lies behind the tail of the current context.
-            // Go back to find first branch event that does not affect the coverage of the current context.
-            auto first_it = std::ranges::find_if(std::reverse_iterator{active_branch().branch_event_it},
-                                                 std::reverse_iterator{std::ranges::begin(branch_event_queue())},
-                                                 [&] (auto const & event)
-            {
-                return (event.event_handle()->is_insertion() && event.position() == context_begin_position()) ||
-                       (event.position() < context_begin_position());
-            }).base();
-
-            assert(first_it == std::ranges::end(branch_event_queue()) ||
-                   first_it->position() >= context_begin_position());
-
-            // Now determine the supported coverage within this context.
-            return supported_coverage_in(first_it, active_branch().branch_event_it);
-        }
-
-        // On non base branches the coverage will not be updated when joining delta events.
+        // On non-base branches the coverage will not be updated when joining delta events.
         // Instead, this update is done here only when requested.
         // To do this, the interval of join events which lie between the head of the context and the original
         // branch event is found, and then the supported coverage is determined.
@@ -675,7 +666,8 @@ private:
                                              std::ranges::end(join_event_queue()),
                                              [&] (auto const & join_event)
         {
-            return join_event.position() >= branch_position();
+            return (join_event.event_handle() == _branch_stack.branch_at(1).delta_event) ||
+                    join_event.position() > branch_position();
         });
 
         // Update the join event so in case we need to call context position on the same branch again, we can
@@ -683,7 +675,15 @@ private:
         active_branch().join_event_it = join_begin;
 
         // Determine the supported coverage.
-        return supported_coverage_in(join_begin, join_end);
+        coverage_type unsupported = std::accumulate(join_begin,
+                                                    join_end,
+                                                    coverage_type(_sequence_offsets.size(), false),
+                                                    [] (coverage_type coverage, auto const & event)
+        {
+            return coverage | event.coverage();
+        });
+
+        return active_branch().coverage & ~unsupported;
     }
     //!\}
 };

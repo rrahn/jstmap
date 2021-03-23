@@ -16,8 +16,6 @@
 #include <seqan3/alphabet/adaptation/char.hpp>
 #include <seqan3/utility/detail/multi_invocable.hpp>
 
-#include <seqan3/core/debug_stream.hpp>
-
 #include <libjst/journaled_sequence_tree.hpp>
 
 #include "test_utility.hpp" // make_gaped
@@ -104,11 +102,9 @@ struct traversal_test : public ::testing::TestWithParam<traversal_fixture>
 
         std::ranges::for_each(alignments, [&] (alignment_t const alignment)
         {
-            // seqan3::debug_stream << "Test alignment: " << alignment << "\n";
             jst.add(alignment);
         });
 
-        jst.print_event_queue();
         return jst;
     }
 
@@ -180,8 +176,6 @@ private:
             alignments[i] = std::pair{libjst::test::make_gapped(first_sequence),
                                       libjst::test::make_gapped(second_sequence)};
 
-            // seqan3::debug_stream << "Alignment " << "i: " << alignments[i] << "\n";
-
             std::erase(second_sequence, '-');
             sequences[i] = second_sequence;
         }
@@ -228,16 +222,12 @@ TEST_P(traversal_test, enumerate_contexts)
 {
     auto jst = this->construct_jst();
     auto context_enumerator = jst.context_enumerator_2(GetParam().context_size);
-    size_t context_id{};
     for (auto context_it = context_enumerator.begin(); context_it != context_enumerator.end(); ++context_it)
     {
         auto context = *context_it;
         std::string tmp{context.begin(), context.end()};
 
-        std::cout << "context " << context_id++ << ": " << tmp << "\n";
         auto positions = context_it.positions();
-        for (auto position : positions)
-            std::cout << "\t" << position << "\n";
 
         EXPECT_TRUE((this->context_positions_exist(tmp, positions))) << "context " << tmp;
     }
@@ -998,6 +988,404 @@ INSTANTIATE_TEST_SUITE_P(larger_deletion_overlaps_smaller_deletions, traversal_t
         shared_event_t{3u, deletion_t{1}, coverage_t{1, 1, 0, 0, 1, 1, 0, 0, 0}},
         shared_event_t{6u, deletion_t{2}, coverage_t{1, 0, 1, 0, 1, 0, 0, 0, 0}},
         shared_event_t{9u, deletion_t{1}, coverage_t{1, 1, 0, 0, 0, 1, 0, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(small_deletions_behind_each_other, traversal_test, testing::Values(traversal_fixture
+{
+    //      0123456789
+    //      baccaaaaaa
+    //  s0: -a--aaaaaa
+    //  s1: -accaaaaaa
+    //  s2: ba--aaaaaa
+    //  s3: baccaaaaaa
+
+    // 00:  ba--aa       [ -, -, 0, -]
+    // 01:   a--aaa      [ 0, -, 1, -]
+    // 02:  bacc         [ -, -, -, 0]
+    // 02:   acca        [ -, 0, -, 1]
+    // 03:    ccaa       [ -, 1, -, 2]
+    // 04:     caaa      [ -, 2, -, 3]
+    // 05:      aaaa     [ 1, 3, 2, 4]
+    // 06:       aaaa    [ 2, 4, 3, 5]
+    // 06:        aaaa   [ 3, 5, 4, 6]
+
+    .reference{"baccaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{0u, deletion_t{1}, coverage_t{1, 1, 0, 0}},
+        shared_event_t{2u, deletion_t{2}, coverage_t{1, 0, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+// ----------------------------------------------------------------------------
+// Test mixed variants
+// ----------------------------------------------------------------------------
+
+INSTANTIATE_TEST_SUITE_P(insertion_at_begin_followed_by_deletion_of_entire_reference, traversal_test, testing::Values(traversal_fixture
+{
+    //           0123456789
+    //      bbbbbaaaaaaaaaa
+    //  s0: bbbbb----------
+    //  s1: bbbbbaaaaaaaaaa
+    //  s2: _____----------
+    //  s3: _____aaaaaaaaaa
+
+    // 00:  bbbb            [ 0, 0, -, -]
+    // 01:   bbbb           [ 1, 1, -, -]
+    // 02:    bbba          [ -, 2, -, -]
+    // 03:     bbaa         [ -, 3, -, -]
+    // 04:      baaa        [ -, 4, -, -]
+    // 05:       aaaa       [ -, 5, -, 0]
+    // 06:        aaaa      [ -, 6, -, 1]
+    // 07:         aaaa     [ -, 7, -, 2]
+    // 08:          aaaa    [ -, 8, -, 3]
+    // 09:           aaaa   [ -, 9, -, 4]
+    // 10:            aaaa  [ -,10, -, 5]
+    // 11:             aaaa [ -,11, -, 6]
+
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{0u, insertion_t{"bbbbb"s}, coverage_t{1, 1, 0, 0}},
+        shared_event_t{0u, deletion_t{10}, coverage_t{1, 0, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(insertion_at_begin_followed_by_deletion_without_valid_context, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{0u, insertion_t{"bbb"s}, coverage_t{1, 1, 0, 0}},
+        shared_event_t{0u, deletion_t{10}, coverage_t{1, 0, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(insertion_at_begin_followed_by_deletion_with_one_valid_context, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{0u, insertion_t{"bbb"s}, coverage_t{1, 1, 0, 0}},
+        shared_event_t{0u, deletion_t{9}, coverage_t{1, 0, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(two_insertions_with_preceding_and_trailing_deletion, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{8u},
+    .events
+    {
+        shared_event_t{2u, deletion_t{3}, coverage_t{1, 1, 0, 0, 1, 1, 0, 0}},
+        shared_event_t{5u, insertion_t{"iii"s}, coverage_t{1, 1, 0, 0, 0, 0, 0, 0}},
+        shared_event_t{5u, insertion_t{"jjj"s}, coverage_t{0, 0, 1, 1, 0, 0, 0, 0}},
+        shared_event_t{5u, deletion_t{3}, coverage_t{1, 0, 1, 0, 1, 0, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(overlapping_insertion_deletion_substitution_at_begin, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{5u},
+    .events
+    {
+        shared_event_t{0u, insertion_t{"i"s}, coverage_t{1, 1, 0, 0, 0}},
+        shared_event_t{0u, deletion_t{1}, coverage_t{1, 0, 0, 1, 0}},
+        shared_event_t{0u, substitution_t{"q"s}, coverage_t{0, 1, 1, 0, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(overlapping_insertion_deletion_substitution_at_end, traversal_test, testing::Values(traversal_fixture
+{
+    //      01234
+    //      aaaaa
+    //  s0: aaaa-i
+    //  s1: aaaaqi
+    //  s2: aaaaq
+    //  s3: aaaa-
+    //  s4: aaaaa
+
+    // 00:  aaaa       [ 0, 0, 0, 0, 0]
+    // 01:   aaaq      [ -, 1, 1, -, -]
+    // 02:    aaqi     [ -, 2, -, -, -]
+    // 03:   aaa-i     [ 1, -, -, -, -]
+    // 04:   aaaa      [ -, -, -, -, 1]
+
+    .reference{"aaaaa"s},
+    .sequence_count{5u},
+    .events
+    {
+        shared_event_t{4u, deletion_t{1}, coverage_t{1, 0, 0, 1, 0}},
+        shared_event_t{4u, substitution_t{"q"s}, coverage_t{0, 1, 1, 0, 0}},
+        shared_event_t{5u, insertion_t{"i"s}, coverage_t{1, 1, 0, 0, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(deletion_at_end_without_subsequent_insertion, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{4u, deletion_t{1}, coverage_t{1, 1, 0, 0}},
+        shared_event_t{5u, insertion_t{"i"s}, coverage_t{0, 0, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(longer_deletion_at_end_without_subsequent_insertion, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{4u, deletion_t{4}, coverage_t{1, 1, 0, 0}},
+        shared_event_t{8u, insertion_t{"i"s}, coverage_t{0, 0, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(longer_split_deletion_at_end_with_subsequent_insertion, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{0u, deletion_t{1}, coverage_t{1, 1, 0, 0}},
+        shared_event_t{2u, deletion_t{1}, coverage_t{1, 0, 1, 0}},
+        shared_event_t{4u, deletion_t{4}, coverage_t{1, 0, 0, 0}},
+        shared_event_t{8u, insertion_t{"ii"s}, coverage_t{1, 1, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(longer_split_deletion_at_end_without_subsequent_insertion, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{0u, deletion_t{1}, coverage_t{1, 1, 0, 0}},
+        shared_event_t{2u, deletion_t{1}, coverage_t{1, 0, 1, 0}},
+        shared_event_t{4u, deletion_t{4}, coverage_t{1, 0, 0, 0}},
+        shared_event_t{8u, insertion_t{"ii"s}, coverage_t{0, 0, 0, 1}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(longer_deletion_and_substitution_with_insertion_at_end, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{4u, deletion_t{4}, coverage_t{1, 0, 0, 0}},
+        shared_event_t{5u, substitution_t{"qqq"s}, coverage_t{0, 1, 0, 0}},
+        shared_event_t{8u, insertion_t{"i"s}, coverage_t{1, 1, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(longer_deletion_and_substitution_without_insertion_at_end, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaa"s},
+    .sequence_count{4u},
+    .events
+    {
+        shared_event_t{4u, deletion_t{4}, coverage_t{1, 0, 0, 0}},
+        shared_event_t{5u, substitution_t{"qqq"s}, coverage_t{0, 1, 0, 0}},
+        shared_event_t{8u, insertion_t{"i"s}, coverage_t{0, 0, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(three_insertions_with_multiple_preceding_and_trailing_events, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{8u},
+    .events
+    {
+        shared_event_t{1u, substitution_t{"pppp"s}, coverage_t{1, 1, 0, 0, 0, 0, 1, 1}},
+        shared_event_t{2u, deletion_t{3},           coverage_t{1, 1, 0, 0, 1, 1, 0, 0}},
+        shared_event_t{5u, insertion_t{"ii"s},      coverage_t{1, 0, 0, 1, 0, 0, 0, 0}},
+        shared_event_t{5u, insertion_t{"jjj"s},     coverage_t{0, 1, 0, 0, 0, 0, 0, 0}},
+        shared_event_t{5u, insertion_t{"k"s},       coverage_t{0, 0, 1, 0, 0, 0, 0, 0}},
+        shared_event_t{5u, deletion_t{3},           coverage_t{1, 1, 0, 0, 0, 0, 0, 0}},
+        shared_event_t{5u, substitution_t{"qq"s},   coverage_t{0, 0, 0, 0, 1, 1, 0, 0}},
+        shared_event_t{5u, deletion_t{3},           coverage_t{0, 0, 0, 0, 0, 0, 0, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(three_insertions_with_multiple_preceding_and_trailing_events_and_final_insertion, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"aaaaaaaaaa"s},
+    .sequence_count{16u},
+    .events
+    {
+        shared_event_t{1u, substitution_t{"pppp"s}, coverage_t{1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0}},
+        shared_event_t{2u, deletion_t{3},           coverage_t{1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+        shared_event_t{5u, insertion_t{"ii"s},      coverage_t{1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0}},
+        shared_event_t{5u, insertion_t{"jjj"s},     coverage_t{0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0}},
+        shared_event_t{5u, insertion_t{"k"s},       coverage_t{0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0}},
+        shared_event_t{5u, deletion_t{3},           coverage_t{1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0}},
+        shared_event_t{5u, substitution_t{"qq"s},   coverage_t{0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+        shared_event_t{5u, deletion_t{3},           coverage_t{0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0}},
+        shared_event_t{9u, insertion_t{"llll"},     coverage_t{1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(insertion_in_middle_surrounded_by_deletion_with_one_valid_context, traversal_test, testing::Values(traversal_fixture
+{
+    //      0123  456789
+    //      xaaabbaaaaay
+    //  s0: x---bb-----y
+    //  s1: x---bbaaaaay
+    //  s2: x---__-----y
+    //  s3: x---__aaaaay
+    //  s4: xaaabb-----y
+    //  s5: xaaabbaaaaay
+    //  s6: xaaa__-----y
+    //  s7: xaaa__aaaaay
+    //                      0  1  2  3  4  5  6  7
+    // 00:  x---bb-----y  [ 0, -, -, -, -, -, -, -]
+    // 01:  x---bba       [ -, 0, -, -, -, -, -, -]
+    // 02:  x---__aaa     [ -, -, -, 0, -, -, -, -]
+    // 03:  xaaa          [ -, -, -, -, 0, 0, 0, 0]
+    // 04:   aaab         [ -, -, -, -, 1, 1, -, -]
+    // 05:    aabb        [ -, -, -, -, 2, 2, -, -]
+    // 06:     abb-----y  [ -, -, -, -, 3, -, -, -]
+    // 07:     abba       [ -, -, -, -, -, 3, -, -]
+    // 08:      bbaa      [ -, 1, -, -, -, 4, -, -]
+    // 09:       baaa     [ -, 2, -, -, -, 5, -, -]
+    // 10:   aaa__-----y  [ -, -, -, -, -, -, 1, -]
+    // 11:   aaa__a       [ -, -, -, -, -, -, -, 1]
+    // 12:    aa__aa      [ -, -, -, -, -, -, -, 2]
+    // 13:     a__aaa     [ -, -, -, -, -, -, -, 3]
+    // 14:        aaaa    [ -, 3, -, 1, -, 6, -, 4]
+    // 15:         aaaa   [ -, 4, -, 2, -, 7, -, 5]
+    // 16:          aaay  [ -, 5, -, 3, -, 8, -, 6]
+    .reference{"xaaaaaaaay"s},
+    .sequence_count{8u},
+    .events
+    {
+        shared_event_t{1u, deletion_t{3}, coverage_t{1, 1, 1, 1, 0, 0, 0, 0}},
+        shared_event_t{4u, insertion_t{"bb"s}, coverage_t{1, 1, 0, 0, 1, 1, 0, 0}},
+        shared_event_t{4u, deletion_t{5}, coverage_t{1, 0, 1, 0, 1, 0, 1, 0}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(insertion_at_end_and_begin_of_substitutions_and_deletions, traversal_test, testing::Values(traversal_fixture
+{
+    //      0123    45    6789
+    //      xaaa____bb____cccy
+    //  s0: x---ii__qq____qqqy
+    //  s1: x---ii__bbkkkkcccy
+    //  s2: x---jjjjqq____qqqy
+    //  s3: x---jjjjbbkkkkcccy
+    //  s4: xaaaii__--____---y
+    //  s5: xaaaii__bb____cccy
+    //  s6: xaaajjjj--____---y
+    //  s7: xaaajjjjbb____ccrr
+    //                             0   1   2   3   4   5   6   7
+    // 00:  x---ii__q           [ 00,  -,  -,  -,  -,  -,  -,  -]
+    // 01:  x---ii__b           [  -, 00,  -,  -,  -,  -,  -,  -]
+    // 02:  x---jjj             [  -,  -, 00, 00,  -,  -,  -,  -]
+    // 03:  xaaa                [  -,  -,  -,  -, 00, 00, 00, 00]
+    // 04:   aaai               [  -,  -,  -,  -, 01, 01,  -,  -]
+    // 05:    aaii              [  -,  -,  -,  -, 02, 02,  -,  -]
+    // 06:     aii__q           [  -,  -,  -,  -,  -,  -,  -,  -] // unsupported branch
+    // 07:      ii__qq          [ 01,  -,  -,  -,  -,  -,  -,  -]
+    // 08:       i__qq____q     [ 02,  -,  -,  -,  -,  -,  -,  -]
+    // 09:     aii__--____---y  [  -,  -,  -,  -, 03,  -,  -,  -]
+    // 10:     aii__b           [  -,  -,  -,  -,  -, 03,  -,  -]
+    // 11:      ii__bb          [  -, 01,  -,  -,  -, 04,  -,  -]
+    // 12:       i__bbk         [  -, 02,  -,  -,  -,  -,  -,  -]
+    // 13:       i__bb____c     [  -,  -,  -,  -,  -, 05,  -,  -]
+    // 14:   aaaj               [  -,  -,  -,  -,  -,  -, 01, 01]
+    // 15:    aajj              [  -,  -,  -,  -,  -,  -, 02, 02]
+    // 16:     ajjj             [  -,  -,  -,  -,  -,  -, 03, 03]
+    // 17:      jjjj            [  -,  -, 01, 01,  -,  -, 04, 04]
+    // 18:       jjjq           [  -,  -, 02,  -,  -,  -,  -,  -]
+    // 19:        jjqq          [  -,  -, 03,  -,  -,  -,  -,  -]
+    // 20:         jqq____q     [  -,  -, 04,  -,  -,  -,  -,  -]
+    // 21:       jjj--____---y  [  -,  -,  -,  -,  -,  -, 05,  -]
+    // 22:       jjjb           [  -,  -,  -, 02,  -,  -,  -, 05]
+    // 23:        jjbb          [  -,  -,  -, 03,  -,  -,  -, 06]
+    // 24:         jbbk         [  -,  -,  -, 04,  -,  -,  -,  -]
+    // 25:         jbb____c     [  -,  -,  -,  -,  -,  -,  -, 07]
+    // 26:   aaa____q           [  -,  -,  -,  -,  -,  -,  -,  -]  // unsupported branch
+    // 27:    aa____qq          [  -,  -,  -,  -,  -,  -,  -,  -]  // unsupported branch
+    // 28:     a____qq____q     [  -,  -,  -,  -,  -,  -,  -,  -]  // unsupported branch
+    // 29:          qq____qq    [ 03,  -, 05,  -,  -,  -,  -,  -]
+    // 30:           q____qqq   [ 04,  -, 06,  -,  -,  -,  -,  -]
+    // 31:                qqqy  [ 05,  -, 07,  -,  -,  -,  -,  -]
+    // 32:   aaa____--____---y  [  -,  -,  -,  -,  -,  -,  -,  -]  // unsupported branch
+    // 33:   aaa____b           [  -,  -,  -,  -,  -,  -,  -,  -]  // unsupported base
+    // 34:    aa____bb          [  -,  -,  -,  -,  -,  -,  -,  -]  // unsupported base
+    // 35:     a____bbk         [  -,  -,  -,  -,  -,  -,  -,  -]  // unsupported branch
+    // 36:          bbkk        [  -, 03,  -, 05,  -,  -,  -,  -]
+    // 37:           bkkk       [  -, 04,  -, 06,  -,  -,  -,  -]
+    // 38:            kkkk      [  -, 05,  -, 07,  -,  -,  -,  -]
+    // 39:             kkkc     [  -, 06,  -, 08,  -,  -,  -,  -]
+    // 40:              kkcc    [  -, 07,  -, 09,  -,  -,  -,  -]
+    // 41:               kccc   [  -, 08,  -, 10,  -,  -,  -,  -]
+    // 42:     a____bb____c     [  -,  -,  -,  -,  -,  -,  -,  -]  // unsupported base
+    // 43:          bb____cc    [  -,  -,  -,  -,  -, 06,  -, 08]
+    // 44:           b____ccr   [  -,  -,  -,  -,  -,  -,  -, 09]
+    // 45:                ccrr  [  -,  -,  -,  -,  -,  -,  -, 10]
+    // 46:           b____ccc   [  -,  -,  -,  -,  -, 07,  -,  -]
+    // 47:                cccy  [  -, 09,  -, 11,  -, 08,  -,  -]
+
+    .reference{"xaaabbcccy"s},
+    .sequence_count{8u},
+    .events
+    {
+        shared_event_t{1u, deletion_t{3},            coverage_t{1, 1, 1, 1, 0, 0, 0, 0}},
+        shared_event_t{4u, insertion_t{"ii"s},       coverage_t{1, 1, 0, 0, 1, 1, 0, 0}},
+        shared_event_t{4u, insertion_t{"jjjj"s},     coverage_t{0, 0, 1, 1, 0, 0, 1, 1}},
+        shared_event_t{4u, substitution_t{"qqqqq"s}, coverage_t{1, 0, 1, 0, 0, 0, 0, 0}},
+        shared_event_t{4u, deletion_t{5},            coverage_t{0, 0, 0, 0, 1, 0, 1, 0}},
+        shared_event_t{6u, insertion_t{"kkkk"s},     coverage_t{0, 1, 0, 1, 0, 0, 0, 0}},
+        shared_event_t{8u, substitution_t{"rr"s},    coverage_t{0, 0, 0, 0, 0, 0, 0, 1}},
+    },
+    .context_size{4u}
+}));
+
+INSTANTIATE_TEST_SUITE_P(multiple_overlapping_and_nested_variants, traversal_test, testing::Values(traversal_fixture
+{
+    .reference{"xaaabbcccy"s},
+    .sequence_count{8u},
+    .events
+    {
+        shared_event_t{0u, insertion_t{"f"s},        coverage_t{1, 0, 0, 0, 0, 0, 0, 0}},
+        shared_event_t{0u, insertion_t{"gg"s},       coverage_t{0, 1, 0, 0, 0, 0, 0, 0}},
+        shared_event_t{0u, insertion_t{"hhh"s},      coverage_t{0, 0, 1, 0, 0, 0, 0, 0}},
+        shared_event_t{0u, substitution_t{"pppp"s},  coverage_t{0, 1, 0, 1, 0, 0, 0, 0}},
+        shared_event_t{1u, deletion_t{3},            coverage_t{1, 0, 1, 0, 0, 0, 0, 0}},
+        shared_event_t{4u, insertion_t{"ii"s},       coverage_t{1, 1, 0, 0, 1, 1, 0, 0}},
+        shared_event_t{4u, insertion_t{"jjjj"s},     coverage_t{0, 0, 1, 1, 0, 0, 1, 1}},
+        shared_event_t{4u, substitution_t{"qqqqq"s}, coverage_t{1, 0, 1, 0, 0, 0, 0, 0}},
+        shared_event_t{4u, deletion_t{5},            coverage_t{0, 0, 0, 0, 1, 0, 1, 0}},
+        shared_event_t{6u, insertion_t{"kkkk"s},     coverage_t{0, 1, 0, 1, 0, 0, 0, 0}},
+        shared_event_t{8u, substitution_t{"rr"s},    coverage_t{0, 0, 0, 0, 0, 0, 0, 1}},
+        shared_event_t{10u, insertion_t{"lll"s},     coverage_t{1, 1, 0, 0, 0, 1, 0, 1}},
     },
     .context_size{4u}
 }));
