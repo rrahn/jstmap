@@ -13,6 +13,7 @@
 
 #include <jstmap/index/index_main.hpp> // Pulls in the index sub-command.
 #include <jstmap/search/search_main.hpp> // Pulls in the search sub-command.
+#include <jstmap/simulate/simulate_main.hpp> // Pulls in the search sub-command.
 
 namespace jstmap
 {
@@ -22,6 +23,7 @@ struct tool_names
     inline static const std::string base{"jstmap"};
     inline static const std::string index{"index"};
     inline static const std::string search{"search"};
+    inline static const std::string simulate{"simulate"};
 
     static std::string subparser_name_for(std::string_view subcommand)
     {
@@ -35,7 +37,7 @@ int main(int const argc, char * const argv[])
 {
 
     seqan3::argument_parser jstmap_parser{jstmap::tool_names::base, argc, argv, seqan3::update_notifications::off,
-                                          {jstmap::tool_names::index, jstmap::tool_names::search}};
+                                          {jstmap::tool_names::index, jstmap::tool_names::search, jstmap::tool_names::simulate}};
 
     jstmap_parser.info.description.push_back("The famous population mapper based on journaled string trees.");
 
@@ -51,6 +53,8 @@ int main(int const argc, char * const argv[])
             return jstmap::index_main(selected_parser);
         else if (selected_parser.info.app_name == jstmap::tool_names::subparser_name_for(jstmap::tool_names::search))
             return jstmap::search_main(selected_parser);
+        else if (selected_parser.info.app_name == jstmap::tool_names::subparser_name_for(jstmap::tool_names::simulate))
+            return jstmap::simulate_main(selected_parser);
         else
             std::cerr << "Unknown subparser: " << selected_parser.info.app_name << '\n';
     }
