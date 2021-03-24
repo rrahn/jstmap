@@ -221,7 +221,7 @@ TEST_P(traversal_test, construct)
 TEST_P(traversal_test, enumerate_contexts)
 {
     auto jst = this->construct_jst();
-    auto context_enumerator = jst.context_enumerator_2(GetParam().context_size);
+    auto context_enumerator = jst.context_enumerator(GetParam().context_size);
     for (auto context_it = context_enumerator.begin(); context_it != context_enumerator.end(); ++context_it)
     {
         auto context = *context_it;

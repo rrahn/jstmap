@@ -22,6 +22,7 @@
 #include <seqan3/std/ranges>
 
 #include <cereal/types/vector.hpp>
+#include <cereal/types/list.hpp>
 
 #include <seqan3/alphabet/concept.hpp>
 #include <seqan3/alphabet/gap/gapped.hpp>
@@ -33,7 +34,6 @@
 #include <libjst/detail/journal_sequence_tree_event_branch.hpp>
 #include <libjst/detail/journal_sequence_tree_event_join.hpp>
 #include <libjst/detail/transform_to_delta_events.hpp>
-#include <libjst/journaled_sequence_tree_cursor.hpp>
 #include <libjst/journal_decorator.hpp>
 #include <libjst/journal_sequence_tree_context_enumerator.hpp>
 
@@ -54,7 +54,6 @@ class journaled_sequence_tree<sequence_t>::type
 {
 private:
     using alphabet_t = std::ranges::range_value_t<sequence_t>; //!< The alphabet type of the underlying sequence.
-    using sequence_collection_type = std::vector<sequence_t>; //!< The type to store the sequence collection. [REMOVE_ME]
 
     using delta_event_shared_type = detail::delta_event_shared<alphabet_t>; //!< The shared delta event type.
     //!\brief The type used to mark a delta event type as a branch event.
@@ -66,21 +65,16 @@ private:
     //!\brief The container type that stores all delta events.
     using event_list_type = std::list<delta_event_shared_type>;
 
-    //!\brief Befriend the cursor type. [REMOVE_ME]
-    template <typename>
-    friend class journaled_sequence_tree_cursor;
-
     //!\cond
     template <typename>
     friend class detail::journal_sequence_tree_context_enumerator;
     //!\endcond
 
     sequence_t _reference; //!< The internal reference used for referential compression.
-    sequence_collection_type _sequences; //!< The stored sequences. [REMOVE_ME]
-
     event_list_type _delta_events{}; //!< The list of stored delta events.
     std::multiset<branch_event_type, std::less<void>> _branch_event_queue{}; //!< The queue of branch events.
     std::multiset<join_event_type, std::less<join_event_type>> _join_event_queue{}; //!< The queue of join events.
+    size_t _size{}; //!< The sequence count.
 
 public:
     /*!\name Associated types
@@ -126,7 +120,7 @@ public:
     //!\brief Returns the number of stored sequences.
     size_type size() const
     {
-        return _sequences.size();
+        return _size;
     }
 
     /*!\brief Adds a new sequence to the journaled sequence tree based on the given pairwise alignment.
@@ -192,56 +186,46 @@ public:
                     update_event(event_it);
             }
         }
-
-        // TODO: Remove old code.
-        sequence_t pure_target_sequence;
-        std::ranges::copy(target | std::views::filter(out_gaps)
-                                 | std::views::transform([](gapped_alphabet_t const c)
-                                   {
-                                        return c.template convert_to<alphabet_t>();
-                                   }),
-                          std::cpp20::back_inserter(pure_target_sequence));
-
-        _sequences.push_back(std::move(pure_target_sequence));
-
-        assert(validate_added_sequence(size() - 1)); // check if the added sequence is valid.
+        ++_size;
+        assert(validate_added_sequence_with(size() - 1, target)); // check if the added sequence is valid.
     }
 
     //!\brief Returns a new context enumerator over the current journaled sequence tree.
-    auto context_enumerator(size_t const context_size) const noexcept
-    {
-        return libjst::journaled_sequence_tree_cursor<type>{this, context_size};
-    }
-
-    //!\brief Returns a new context enumerator over the current journaled sequence tree.
-    context_enumerator_type context_enumerator_2(size_t const context_size) const noexcept
+    context_enumerator_type context_enumerator(size_t const context_size) const noexcept
     {
         // TODO: Throw if not valid context.
         return detail::journal_sequence_tree_context_enumerator<type>{this, context_size};
     }
 
-    /*!\brief Saves the journaled sequence tree to the given output archive.
+    /*!\brief Saves this journaled sequence tree to the given output archive.
      *
      * \tparam output_archive_t The type of the output_archive; must model seqan3::cereal_output_archive.
      *
-     * \param[in] archive The archive to serialise this object to.
+     * \param[in, out] archive The archive to serialise this object to.
      */
     template <seqan3::cereal_output_archive output_archive_t>
     void save(output_archive_t & archive) const
     {
-        archive(_reference, _sequences);
+        archive(_reference, _delta_events, _size);
     }
 
-    /*!\brief Loads the journaled sequence tree from the given input archive.
+    /*!\brief Loads this journaled sequence tree from the given input archive.
      *
      * \tparam input_archive_t The type of the input_archive; must model seqan3::cereal_input_archive.
      *
-     * \param[in] archive The archive to serialise this object to.
+     * \param[in, out] archive The archive to serialise this object from.
      */
     template <seqan3::cereal_input_archive input_archive_t>
     void load(input_archive_t & archive)
     {
-        archive(_reference, _sequences);
+        archive(_reference, _delta_events, _size);
+
+        // Refill the queues which just store pointers.
+        std::ranges::for_each(_delta_events, [&] (auto & event)
+        {
+            _branch_event_queue.emplace(std::addressof(event));
+            _join_event_queue.emplace(std::addressof(event));
+        });
     }
 
     //!\cond
@@ -333,6 +317,7 @@ private:
     /*!\brief Validates that the transformation of the given alignment was correct.
      *
      * \param[in] idx The index of the sequence to validate.
+     * \param[in] target The aligned target sequence from the input.
      *
      * \returns `true` if the added events can reconstruct the aligned target sequence, otherwise `false`.
      *
@@ -340,8 +325,11 @@ private:
      *
      * Constructs a journal decorator from the recorded delta events that have a bit at the 'idx' position of the
      * associated coverage and compares this generated sequence with the aligned target sequence without gaps.
+     * Note this function is only used during debug builds to validate that the alignment has been correctly
+     * transformed into a set of delta events.
      */
-    bool validate_added_sequence(size_t const idx) const
+    template <typename aligned_sequence_t>
+    bool validate_added_sequence_with(size_t const idx, aligned_sequence_t && target) const
     {
         // Create journal decorator and register all events.
         libjst::journal_decorator jd{std::span{reference()}};
@@ -376,8 +364,18 @@ private:
             target_position_offset += delta_event->insertion_size() - static_cast<int32_t>(delta_event->deletion_size());
         }
 
+        using alphabet_t = std::ranges::range_value_t<sequence_t>;
+        using gapped_alphabet_t = seqan3::gapped<alphabet_t>;
+        sequence_t pure_target_sequence;
+        std::ranges::copy(target | std::views::filter([] (gapped_alphabet_t const c) -> bool { return c != seqan3::gap{}; })
+                                 | std::views::transform([](gapped_alphabet_t const c)
+                                   {
+                                        return c.template convert_to<alphabet_t>();
+                                   }),
+                          std::cpp20::back_inserter(pure_target_sequence));
+
         // The target sequence and the journal decorator must be equal.
-        return std::ranges::equal(jd, _sequences[idx]);
+        return std::ranges::equal(jd, pure_target_sequence);
     }
 };
 } // namespace libjst::no_adl
@@ -394,7 +392,7 @@ namespace libjst
  * This class stores a collection of sequences in a referentially compressed way to tremendously reduce the
  * memory footprint for storing large collections of sequences with a high similarity. Sequences can be added by
  * adding an alignment between the stored reference sequence and the respective target sequence. This class further
- * supports a special cursor to enable an efficient, compression parallel traversal over the stored sequences.
+ * supports a special enumerator to enable an efficient, compression parallel traversal over the compressed sequences.
  * This can be used in conjunction with any context based streaming algorithm to speed-up the search against large
  * collection of sequences.
  */

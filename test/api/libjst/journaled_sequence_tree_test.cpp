@@ -103,25 +103,32 @@ TEST_F(journaled_sequence_tree_fixture, context_enumerator)
 
     auto context_enumerator = jst.context_enumerator(4u);
 
+    auto advance_supported_context = [&] (auto & it)
+    {
+        while (it != context_enumerator.end() && it.positions().empty())
+            ++it;
+    };
+
     auto it = context_enumerator.begin();
-    EXPECT_RANGE_EQ(*it, "aabb"sv);
-    ++it;
-    EXPECT_RANGE_EQ(*it, "abbc"sv);
-    ++it;
-    EXPECT_RANGE_EQ(*it, "bbcc"sv);
-    ++it;
-    EXPECT_RANGE_EQ(*it, "abca"sv);
-    ++it;
-    EXPECT_RANGE_EQ(*it, "bcab"sv);
-    ++it;
-    EXPECT_RANGE_EQ(*it, "cabc"sv);
-    ++it;
+    advance_supported_context(it);
     EXPECT_RANGE_EQ(*it, "ccaa"sv);
-    ++it;
+    advance_supported_context(++it);
     EXPECT_RANGE_EQ(*it, "caab"sv);
-    ++it;
+    advance_supported_context(++it);
     EXPECT_RANGE_EQ(*it, "aabb"sv);
-    ++it;
+    advance_supported_context(++it);
+    EXPECT_RANGE_EQ(*it, "aabb"sv);
+    advance_supported_context(++it);
+    EXPECT_RANGE_EQ(*it, "abbc"sv);
+    advance_supported_context(++it);
+    EXPECT_RANGE_EQ(*it, "bbcc"sv);
+    advance_supported_context(++it);
+    EXPECT_RANGE_EQ(*it, "abca"sv);
+    advance_supported_context(++it);
+    EXPECT_RANGE_EQ(*it, "bcab"sv);
+    advance_supported_context(++it);
+    EXPECT_RANGE_EQ(*it, "cabc"sv);
+    advance_supported_context(++it);
     EXPECT_TRUE(it == context_enumerator.end());
 }
 
@@ -130,10 +137,193 @@ inline constexpr std::string_view expected_output =
 R"json({
     "value0": "aaaabbbbcccc",
     "value1": [
-        "aabbcc",
-        "abcabc",
-        "ccaabb"
-    ]
+        {
+            "value0": {
+                "value0": 0,
+                "value1": {
+                    "index": 2,
+                    "data": {
+                        "value0": {
+                            "value0": 12
+                        }
+                    }
+                }
+            },
+            "value1": [
+                true,
+                true,
+                false
+            ]
+        },
+        {
+            "value0": {
+                "value0": 12,
+                "value1": {
+                    "index": 0,
+                    "data": {
+                        "value0": {
+                            "value0": [
+                                97,
+                                97,
+                                98,
+                                98,
+                                99,
+                                99
+                            ]
+                        }
+                    }
+                }
+            },
+            "value1": [
+                true,
+                false,
+                false
+            ]
+        },
+        {
+            "value0": {
+                "value0": 12,
+                "value1": {
+                    "index": 0,
+                    "data": {
+                        "value0": {
+                            "value0": [
+                                97,
+                                98,
+                                99,
+                                97,
+                                98,
+                                99
+                            ]
+                        }
+                    }
+                }
+            },
+            "value1": [
+                false,
+                true,
+                false
+            ]
+        },
+        {
+            "value0": {
+                "value0": 0,
+                "value1": {
+                    "index": 2,
+                    "data": {
+                        "value0": {
+                            "value0": 4
+                        }
+                    }
+                }
+            },
+            "value1": [
+                false,
+                false,
+                true
+            ]
+        },
+        {
+            "value0": {
+                "value0": 4,
+                "value1": {
+                    "index": 0,
+                    "data": {
+                        "value0": {
+                            "value0": [
+                                99,
+                                99
+                            ]
+                        }
+                    }
+                }
+            },
+            "value1": [
+                false,
+                false,
+                true
+            ]
+        },
+        {
+            "value0": {
+                "value0": 4,
+                "value1": {
+                    "index": 2,
+                    "data": {
+                        "value0": {
+                            "value0": 4
+                        }
+                    }
+                }
+            },
+            "value1": [
+                false,
+                false,
+                true
+            ]
+        },
+        {
+            "value0": {
+                "value0": 8,
+                "value1": {
+                    "index": 0,
+                    "data": {
+                        "value0": {
+                            "value0": [
+                                97,
+                                97
+                            ]
+                        }
+                    }
+                }
+            },
+            "value1": [
+                false,
+                false,
+                true
+            ]
+        },
+        {
+            "value0": {
+                "value0": 8,
+                "value1": {
+                    "index": 2,
+                    "data": {
+                        "value0": {
+                            "value0": 4
+                        }
+                    }
+                }
+            },
+            "value1": [
+                false,
+                false,
+                true
+            ]
+        },
+        {
+            "value0": {
+                "value0": 12,
+                "value1": {
+                    "index": 0,
+                    "data": {
+                        "value0": {
+                            "value0": [
+                                98,
+                                98
+                            ]
+                        }
+                    }
+                }
+            },
+            "value1": [
+                false,
+                false,
+                true
+            ]
+        }
+    ],
+    "value2": 3
 })json";
 
 TEST_F(journaled_sequence_tree_fixture, save)
