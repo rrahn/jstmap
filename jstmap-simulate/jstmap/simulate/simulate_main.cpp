@@ -32,14 +32,19 @@
 
 namespace jstmap
 {
+
+struct my_traits : seqan3::sequence_file_input_default_traits_dna
+{
+    using sequence_alphabet = seqan3::gapped<seqan3::dna5>;               // instead of dna5
+};
 aligned_sequence_t load_sequence(std::filesystem::path const & sequence_file)
 {
     aligned_sequence_t sequence;
-    seqan3::sequence_file_input fin{sequence_file.c_str()};
+    seqan3::sequence_file_input<my_traits> fin{sequence_file.c_str()};
     std::ranges::for_each(fin, [&] (auto const & sequence_record)
     {
         seqan3::debug_stream << seqan3::get<seqan3::field::seq>(sequence_record) << '\n';
-        // sequence = seqan3::get<seqan3::field::seq>(sequence_record);
+        sequence = seqan3::get<seqan3::field::seq>(sequence_record);
     });
 
     return sequence;
@@ -60,7 +65,9 @@ seqan3::gapped<seqan3::dna5> random_char()
     static std::uniform_int_distribution<short> distr{0, 3};
     static std::random_device engine;
     static std::mt19937 noise{engine()};
-    return seqan3::gapped<seqan3::dna5>{}.assign_rank(distr(noise));
+
+    return static_cast<seqan3::gapped<seqan3::dna5> >(seqan3::dna4{}.assign_rank(distr(noise)));
+    // return seqan3::gapped<seqan3::dna5>{}.assign_char(seqan3::dna5(seqan3::dna4{}.assign_rank(distr(noise)));
 }
 seqan3::gapped<seqan3::dna5> random_char(seqan3::gapped<seqan3::dna5> old_char)
 {
@@ -69,7 +76,7 @@ seqan3::gapped<seqan3::dna5> random_char(seqan3::gapped<seqan3::dna5> old_char)
     static std::mt19937 noise{engine()};
     seqan3::gapped<seqan3::dna5> new_char;
     do {
-        new_char.assign_rank(distr(noise));
+        new_char = static_cast<seqan3::dna5>(seqan3::dna4{}.assign_rank(distr(noise)));
     } while (new_char == old_char);
     return new_char;
 }
@@ -100,13 +107,13 @@ int simulate_main(seqan3::argument_parser & simulate_parser)
     {
         double error_rate = 0.3;
         std::cout << "Loading sequences\n";
-        std::cout << "Actually not. Just creating some dummy sequences myself\n";
-        // auto sequences = load_sequence(options.input_file);
-        // aligned_sequence_t reference{sequence};
-        aligned_sequence_t reference(20);
-        for(size_t i = 0; i < reference.size(); ++i){
-            reference[i].assign_rank(i % 4);
-        }
+        auto sequence = load_sequence(options.input_file);
+        aligned_sequence_t reference{sequence};
+        // std::cout << "Actually not. Just creating some dummy sequences myself\n";
+        // aligned_sequence_t reference(20);
+        // for(size_t i = 0; i < reference.size(); ++i){
+        //     reference[i] = static_cast<seqan3::dna5>(seqan3::dna4{}.assign_rank(i % 4));
+        // }
         alignment_t alignment(reference, reference);
 
         std::set positions = random_positions(reference.size(), reference.size()*error_rate);
