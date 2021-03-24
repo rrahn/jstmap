@@ -21,6 +21,7 @@ struct simulate_options
 {
     std::filesystem::path input_file{}; //!< The file path contianing the sequences to simulate.
     std::filesystem::path output_file{}; //!< The file path to write the constructed simulate to.
+    double error_rate = 0.01;
 };
 
 }  // namespace jstmap
