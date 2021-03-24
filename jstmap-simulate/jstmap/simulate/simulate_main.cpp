@@ -26,7 +26,7 @@
 #include <jstmap/simulate/options.hpp>
 
 #include <random> // uniform_int_distribution, random_device, mt19937
-#include <set> // set
+#include <map> // set
 #include <stdexcept> // invalid_argument
 
 #include <seqan3/core/debug_stream.hpp>
@@ -52,14 +52,17 @@ aligned_sequence_t load_sequence(std::filesystem::path const & sequence_file)
     sequence = seqan3::get<seqan3::field::seq>(*it);
     return sequence;
 }
-std::set<size_t> random_positions(size_t length, size_t n)
+std::map<size_t, short> random_positions(size_t length, size_t n)
 {
     static std::uniform_int_distribution<size_t> distr{0, length-1};
     static std::random_device engine;
     static std::mt19937 noise{engine()};
-    std::set<size_t> positions;
+    std::map<size_t, short> positions;
+    short error_type = 0;
     while (positions.size() < n) {
-        positions.insert(distr(noise));
+        const auto [it, success] = positions.insert({distr(noise), error_type});
+        error_type += success;
+        error_type &= 3; // mod 4
     }
     return positions;
 }
@@ -122,17 +125,16 @@ int simulate_main(seqan3::argument_parser & simulate_parser)
         // }
         alignment_t alignment(reference, reference);
 
-        std::set positions = random_positions(reference.size(), reference.size()*options.error_rate);
+        // Choose n*error_rate*0.5 positions in alignment for SNPS
+        // Choose n*error_rate*0.25 positions in alignment for Insert
+        // Choose n*error_rate*0.25 positions in alignment for Delete
+        std::map positions = random_positions(reference.size(), reference.size()*options.error_rate);
         for(auto it = positions.begin(); it != positions.end(); ++it)
         {
-            std::cout << *it << " ";
+            std::cout << it->first << ", " << it->second << '\n';
         }
-        std::cout << '\n';
-        // // Choose n*error_rate*0.5 positions in alignment for SNPS
-        // // Choose n*error_rate*0.25 positions in alignment for Insert
-        // // Choose n*error_rate*0.25 positions in alignment for Delete
-        // // iterator over both sequences
-        // // iterator over three index vectors
+        // iterator over both sequences
+        // iterator over three index vectors
         for(size_t i = 0; i < alignment.first.size(); ++i){
             std::cout << i%10 << " ";
         }
@@ -145,15 +147,24 @@ int simulate_main(seqan3::argument_parser & simulate_parser)
             seqan3::debug_stream << alignment.second[i] << " ";
         }
 
-
         std::cout << "\n\n";
         // if index of sequence iterator = index in SNP
             // exchange base in simulated by random different base
+        size_t j = 0;
+        for(auto it = positions.begin(); it != positions.end(); ++it){
+            if (it->second == 3) {
+                alignment.second[it->first + j].assign_char('-');
+            } else if (it->second == 2) {
+                insert_gap(alignment.first, alignment.first.begin() + it->first + j);
+                alignment.second.insert(alignment.second.begin() + it->first + j, random_char());
+                ++j;
+            } else {
+                alignment.second[it->first + j] = (random_char(alignment.second[it->first + j]));
+            }
+        }
         // auto iterator_substitute = positions.begin();
         // for(size_t i = 0; i < alignment.first.size() && iterator_substitute != positions.end(); ++i){
         //     if (i == *iterator_substitute) {
-        //         alignment.second[i] = (random_char(alignment.second[i]));
-        //         ++iterator_substitute;
         //     }
         // }
         // if index of sequence iterator = index in Insert
@@ -170,13 +181,13 @@ int simulate_main(seqan3::argument_parser & simulate_parser)
         // }
         // if index of sequence iterator = index in Delete
             // replace base with gap in reference
-        auto iterator_delete = positions.begin();
-        for(size_t i = 0; i < alignment.first.size() && iterator_delete != positions.end(); ++i){
-            if (i == *iterator_delete) {
-                alignment.second[i].assign_char('-');
-                ++iterator_delete;
-            }
-        }
+        // auto iterator_delete = positions.begin();
+        // for(size_t i = 0; i < alignment.first.size() && iterator_delete != positions.end(); ++i){
+        //     if (i == *iterator_delete) {
+        //         alignment.second[i].assign_char('-');
+        //         ++iterator_delete;
+        //     }
+        // }
 
 
         for(size_t i = 0; i < alignment.first.size(); ++i){
