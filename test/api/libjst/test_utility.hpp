@@ -5,24 +5,29 @@
 // shipped with this file and also available at: https://github.com/seqan/seqan3/blob/master/LICENSE.md
 // -----------------------------------------------------------------------------------------------------
 
-/*!\file
- * \brief Provides build function to create the journaled sequence tree.
- * \author Rene Rahn <rene.rahn AT fu-berlin.de>
- */
-
 #pragma once
 
-#include <libjst/journaled_sequence_tree.hpp>
+#include <string_view>
+#include <vector>
 
-#include <jstmap/index/global_types.hpp>
+#include <seqan3/alphabet/gap/gapped.hpp>
 
-namespace jstmap
+namespace libjst::test
 {
 
-//!\cond
-using jst_t = libjst::journaled_sequence_tree<raw_sequence_t>;
+static std::vector<seqan3::gapped<char>> make_gapped(std::string_view const seq)
+{
+    std::vector<seqan3::gapped<char>> tmp{};
+    tmp.reserve(seq.size());
 
-jst_t build_journaled_sequence_tree(std::vector<raw_sequence_t> &&);
-//!\endcond
+    std::for_each(seq.begin(), seq.end(), [&] (char const c)
+    {
+        if (c == '-')
+            tmp.emplace_back(seqan3::gap{});
+        else
+            tmp.emplace_back(c);
+    });
 
-}  // namespace jstmap
+    return tmp;
+}
+} // namespace libjst

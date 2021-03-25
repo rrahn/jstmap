@@ -47,5 +47,7 @@ add_subdirectory (doc EXCLUDE_FROM_ALL)
 
 ## TEST
 
+enable_testing()
+
 add_subdirectory (test/api EXCLUDE_FROM_ALL)
 add_subdirectory (test/cli EXCLUDE_FROM_ALL)

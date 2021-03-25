@@ -11,7 +11,7 @@
  */
 
 // #include <seqan3/core/detail/pack_algorithm.hpp>
-#include <seqan3/io/alignment_file/output.hpp>
+#include <seqan3/io/sam_file/output.hpp>
 
 #include <jstmap/search/write_results.hpp>
 
@@ -75,10 +75,10 @@ void write_results(std::vector<libjst::context_position> && results,
     // std::vector<size_t> reference_lengths{};
 
     // We need to write more information including the reference sequences and the length of the reference sequences.
-    seqan3::alignment_file_output map_output_file{alignment_map_output_path,
-                                                //   reference_ids,
-                                                //   reference_lengths,
-                                                  seqan3::fields<seqan3::field::ref_offset>{}};
+    seqan3::sam_file_output map_output_file{alignment_map_output_path,
+                                            //   reference_ids,
+                                            //   reference_lengths,
+                                            seqan3::fields<seqan3::field::ref_offset>{}};
 
     std::ranges::for_each(results, [&] (libjst::context_position const & result)
     {

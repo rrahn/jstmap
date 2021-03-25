@@ -9,6 +9,8 @@
 #include <iterator>
 #include <tuple>
 
+#include <seqan3/range/decorator/gap_decorator.hpp>
+
 #include <jstmap/index/journaled_sequence_tree_builder.hpp>
 
 namespace jstmap
@@ -17,7 +19,7 @@ namespace jstmap
 template <typename reference_t, typename sequence_t>
 auto compress(reference_t const & reference, sequence_t const & sequence)
 {
-    return std::tie(reference, sequence);
+    return std::pair{seqan3::gap_decorator{reference}, seqan3::gap_decorator{sequence}};
 }
 
 jst_t build_journaled_sequence_tree(std::vector<raw_sequence_t> && sequences)
