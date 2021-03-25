@@ -147,7 +147,7 @@ private:
                         {
                             // aaaaaaaaa
                             // aaaabbbaa
-                            second_sequence.replace(event_position, insertion_size, s.value().data());
+                            second_sequence.replace(event_position, insertion_size, s.value().data(), insertion_size);
                         },
                         [&] <typename alphabet_t> (libjst::detail::delta_kind_insertion<alphabet_t> const & i)
                         {

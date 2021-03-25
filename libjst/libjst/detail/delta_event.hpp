@@ -174,12 +174,12 @@ public:
      */
     constexpr segment_type sequence() const noexcept
     {
-        return std::visit([] (auto & event_kind) -> segment_type
+        return std::visit([] (auto const & event_kind) -> segment_type
         {
             return seqan3::detail::multi_invocable
             {
-                /*case:*/   [] (substitution_type e) { return segment_type{e.value()}; },
-                /*case:*/   [] (insertion_type e) { return segment_type{e.value()}; },
+                /*case:*/   [] (substitution_type const & e) { return segment_type{e.value()}; },
+                /*case:*/   [] (insertion_type const & e) { return segment_type{e.value()}; },
                 /*default:*/[] (...) { return segment_type{}; }
             }(event_kind);
         }, delta_variant());
