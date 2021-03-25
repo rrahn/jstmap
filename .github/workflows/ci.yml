@@ -161,6 +161,8 @@ jobs:
             make -k -j2 doc 2>doxygen_warnings.txt
           else
             make -k -j2
+            make -k -j2 api_test
+            make -k -j2 cli_test
           fi
 
       - name: Run tests
