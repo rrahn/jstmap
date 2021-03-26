@@ -19,8 +19,6 @@
 #include <random> // uniform_int_distribution, random_device, mt19937
 #include <math.h> // ceil
 
-#include <seqan3/core/debug_stream.hpp>
-
 namespace jstmap
 {
 
@@ -57,43 +55,26 @@ seqan3::gapped<seqan3::dna5> random_char(seqan3::gapped<seqan3::dna5> old_char)
     } while (new_char == old_char);
     return new_char;
 }
-alignment_t simulate_alignment(aligned_sequence_t & reference, double error_rate)
+alignment_t simulate_alignment(sequence_t & unaligned, double error_rate)
 {
+    aligned_sequence_t aligned;
+    seqan3::assign_unaligned(aligned, unaligned);
     seqan3::arithmetic_range_validator error_validator{0,1};
     error_validator(error_rate);
-    alignment_t alignment(reference, reference);
-    for(size_t i = 0; i < alignment.first.size(); ++i){
-        seqan3::debug_stream << alignment.first[i];
-    }
-    seqan3::debug_stream << '\n';
-    for(size_t i = 0; i < alignment.second.size(); ++i){
-        seqan3::debug_stream << alignment.second[i];
-    }
-    seqan3::debug_stream << '\n' << reference.size() << '\n' << ceil(reference.size()*error_rate) << '\n';
-    std::map positions = random_positions(reference.size(), ceil(reference.size()*error_rate));
+    alignment_t alignment(aligned, aligned);
+    std::map positions = random_positions(aligned.size(), ceil(aligned.size()*error_rate));
     size_t j = 0;
     for(auto it = positions.begin(); it != positions.end(); ++it){
         if (it->second == 3) {
             alignment.second[it->first + j].assign_char('-');
-            seqan3::debug_stream << __LINE__ << '\n';
         } else if (it->second == 2) {
             seqan3::insert_gap(alignment.first, alignment.first.begin() + it->first + j);
             alignment.second.insert(alignment.second.begin() + it->first + j, random_char());
             ++j;
-            seqan3::debug_stream << __LINE__ << '\n';
         } else {
             alignment.second[it->first + j] = (random_char(alignment.second[it->first + j]));
-            seqan3::debug_stream << __LINE__ << '\n';
         }
     }
-    for(size_t i = 0; i < alignment.first.size(); ++i){
-        seqan3::debug_stream << alignment.first[i];
-    }
-    seqan3::debug_stream << '\n';
-    for(size_t i = 0; i < alignment.second.size(); ++i){
-        seqan3::debug_stream << alignment.second[i];
-    }
-    seqan3::debug_stream << '\n';
     return alignment;
 }
 

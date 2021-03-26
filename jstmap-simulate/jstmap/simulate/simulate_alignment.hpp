@@ -17,6 +17,6 @@ namespace jstmap
 std::map<size_t, short> random_positions(size_t length, size_t n);
 seqan3::gapped<seqan3::dna5> random_char();
 seqan3::gapped<seqan3::dna5> random_char(seqan3::gapped<seqan3::dna5> old_char);
-alignment_t simulate_alignment(aligned_sequence_t & reference, double error_rate);
+alignment_t simulate_alignment(sequence_t & reference, double error_rate);
 
 }

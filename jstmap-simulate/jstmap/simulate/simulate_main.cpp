@@ -60,8 +60,8 @@ int simulate_main(seqan3::argument_parser & simulate_parser)
     {
         std::cout << "Loading sequences\n";
         sequence_t reference = load_reference(options.input_file);
-        libjst::journaled_sequence_tree<aligned_sequence_t> tree{std::move(reference)};
-        alignment_t simulated = simulate_alignment(tree.reference(), options.error_rate);
+        auto simulated = simulate_alignment(reference, options.error_rate);
+        libjst::journaled_sequence_tree<sequence_t> tree{std::move(reference)};
         tree.add(simulated);
         serialise_jst(tree, options.output_file);
     }
