@@ -20,12 +20,12 @@ namespace jstmap
 
 struct my_traits : seqan3::sequence_file_input_default_traits_dna
 {
-    using sequence_alphabet = seqan3::gapped<seqan3::dna5>; // instead of dna5
+    // using sequence_alphabet = seqan3::dna5; // instead of dna5
     using legal_sequence_alphabet_type = seqan3::dna5;
 };
-aligned_sequence_t load_reference(std::filesystem::path const & sequence_file)
+sequence_t load_reference(std::filesystem::path const & sequence_file)
 {
-    aligned_sequence_t sequence;
+    sequence_t sequence;
     seqan3::sequence_file_input<my_traits> fin{sequence_file.c_str()};
     auto it = fin.begin();
     if (it == fin.end())

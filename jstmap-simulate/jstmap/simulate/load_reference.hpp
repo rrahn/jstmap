@@ -12,6 +12,6 @@
 namespace jstmap
 {
 
-aligned_sequence_t load_reference(std::filesystem::path const & sequence_file);
+sequence_t load_reference(std::filesystem::path const & sequence_file);
 
 } // namespace jstmap
