@@ -7,7 +7,7 @@
 
 /*!\file
  * \brief Provides globally defined types for the index subprogram.
- * \author Rene Rahn <rene.rahn AT fu-berlin.de>
+ * \author Tom Lukas Lankenau <tom.lankenau AT fu-berlin.de>
  */
 
 #pragma once
@@ -21,7 +21,7 @@
 namespace jstmap
 {
 
-//!\brief The sequence type loaded from the disk.
+using sequence_t = std::vector<seqan3::dna5>;
 using aligned_sequence_t = std::vector<seqan3::gapped<seqan3::dna5>>;
 using alignment_t = std::pair<aligned_sequence_t, aligned_sequence_t>;
 

@@ -7,7 +7,7 @@
 
 /*!\file
  * \brief Provides .
- * \author Rene Rahn <rene.rahn AT fu-berlin.de>
+ * \author Tom Lukas Lankenau <tom.lankenau AT fu-berlin.de>
  */
 
 #pragma once

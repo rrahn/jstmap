@@ -10,14 +10,15 @@
  * \author Rene Rahn <rene.rahn AT fu-berlin.de>
  */
 
-#include <seqan3/std/filesystem>
+// #include <seqan3/std/filesystem>
 
-#include <cereal/archives/binary.hpp>
+// #include <cereal/archives/binary.hpp>
 
 #include <seqan3/argument_parser/argument_parser.hpp>
 #include <seqan3/argument_parser/exceptions.hpp>
 #include <seqan3/argument_parser/validators.hpp>
 
+#include <jstmap/index/serialise_jst.hpp>
 #include <jstmap/index/load_sequence.hpp>
 #include <jstmap/index/index_main.hpp>
 #include <jstmap/index/journaled_sequence_tree_builder.hpp>
@@ -25,14 +26,6 @@
 
 namespace jstmap
 {
-
-template <typename jst_t>
-void serialise_jst(jst_t const & tree, std::filesystem::path const & output_path)
-{
-    std::ofstream output_stream{output_path.c_str()};
-    cereal::BinaryOutputArchive binary_archive{output_stream};
-    tree.save(binary_archive);
-}
 
 int index_main(seqan3::argument_parser & index_parser)
 {
