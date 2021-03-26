@@ -5,24 +5,13 @@
 // shipped with this file and also available at: https://github.com/seqan/seqan3/blob/master/LICENSE.md
 // -----------------------------------------------------------------------------------------------------
 
-/*!\file
- * \brief Provides globally defined types for the index subprogram.
- * \author Tom Lukas Lankenau <tom.lankenau AT fu-berlin.de>
- */
-
 #pragma once
 
-#include <utility> //pair
-#include <vector>
-
-#include <seqan3/alphabet/gap/gapped.hpp>
-#include <seqan3/alphabet/nucleotide/dna5.hpp>
+#include <jstmap/simulate/global_types.hpp>
 
 namespace jstmap
 {
 
-//!\brief The sequence type loaded from the disk.
-using aligned_sequence_t = std::vector<seqan3::gapped<seqan3::dna5>>;
-using alignment_t = std::pair<aligned_sequence_t, aligned_sequence_t>;
+aligned_sequence_t load_reference(std::filesystem::path const & sequence_file);
 
-}  // namespace jstmap
+} // namespace jstmap

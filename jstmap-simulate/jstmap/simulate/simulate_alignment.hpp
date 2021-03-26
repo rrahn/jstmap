@@ -9,17 +9,14 @@
 #pragma once
 
 #include <jstmap/simulate/global_types.hpp>
-
-namespace seqan3
-{
-
-class argument_parser;
-
-} // namespace seqan3
+#include <map> // map
 
 namespace jstmap
 {
 
-int simulate_main(seqan3::argument_parser &);
+std::map<size_t, short> random_positions(size_t length, size_t n);
+seqan3::gapped<seqan3::dna5> random_char();
+seqan3::gapped<seqan3::dna5> random_char(seqan3::gapped<seqan3::dna5> old_char);
+alignment_t simulate_alignment(aligned_sequence_t & reference, double error_rate);
 
-} // namespace jstmap
+}
