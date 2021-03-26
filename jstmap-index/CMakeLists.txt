@@ -18,9 +18,16 @@ target_link_libraries (jstmap_index_input PUBLIC jstmap::index::base)
 ### Building the journaled sequence tree
 add_library(jstmap_index_build OBJECT jstmap/index/journaled_sequence_tree_builder.cpp
                                       jstmap/index/journaled_sequence_tree_builder.hpp
+                                      jstmap/index/serialise_jst.hpp
                                       jstmap/index/global_types.hpp)
 target_include_directories (jstmap_index_build PUBLIC jstmap::index::base libjst::libjst)
 target_link_libraries (jstmap_index_build PUBLIC jstmap::index::base libjst::libjst)
+
+### Building the journaled sequence tree
+add_library(jstmap_serialise_jst OBJECT jstmap/index/serialise_jst.hpp
+                                      jstmap/index/global_types.hpp)
+target_include_directories (jstmap_serialise_jst PUBLIC jstmap::index::base libjst::libjst)
+target_link_libraries (jstmap_serialise_jst PUBLIC jstmap::index::base libjst::libjst)
 
 ### Create static library for index subcommand
 add_library (jstmap_index STATIC jstmap/index/index_main.cpp
