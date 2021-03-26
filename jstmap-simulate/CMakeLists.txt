@@ -21,14 +21,14 @@ add_library(jstmap_simulate_build OBJECT jstmap/simulate/simulate_alignment.cpp
                                          jstmap/simulate/simulate_alignment.hpp
                                          jstmap/simulate/global_types.hpp)
 
-target_include_directories (jstmap_simulate_build PUBLIC jstmap::simulate::base libjst::libjst)
-target_link_libraries (jstmap_simulate_build PUBLIC jstmap::simulate::base libjst::libjst)
+target_include_directories (jstmap_simulate_build PUBLIC jstmap::simulate::base)
+target_link_libraries (jstmap_simulate_build PUBLIC jstmap::simulate::base)
 
 ### Create static library for simulate subcommand
 add_library (jstmap_simulate STATIC jstmap/simulate/simulate_main.cpp
                                  jstmap/simulate/simulate_main.hpp)
-target_include_directories (jstmap_simulate PUBLIC jstmap_simulate_input jstmap_simulate_build)
-target_link_libraries (jstmap_simulate PUBLIC jstmap_simulate_input jstmap_simulate_build)
+target_include_directories (jstmap_simulate PUBLIC jstmap_simulate_input jstmap_simulate_build jstmap_index_build libjst::libjst)
+target_link_libraries (jstmap_simulate PUBLIC jstmap_simulate_input jstmap_simulate_build jstmap_index_build libjst::libjst)
 add_library (jstmap::simulate ALIAS jstmap_simulate)
 
 unset (HEADER_LIST)
