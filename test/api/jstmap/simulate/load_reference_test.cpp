@@ -14,7 +14,7 @@
 TEST(jstmap_index, load_reference)
 {
     std::filesystem::path sequence_file{DATADIR"sim_reads_ref1x10.fa"};
-    jstmap::aligned_sequence_t reference = jstmap::load_reference(sequence_file);
+    jstmap::sequence_t reference = jstmap::load_reference(sequence_file);
     EXPECT_EQ(reference.size(), 20u);
 }
 
