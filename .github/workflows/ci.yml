@@ -172,6 +172,9 @@ jobs:
           if [[ "${{ matrix.build }}" =~ ^(documentation)$ ]]; then
             cat doxygen_warnings.txt && test ! -s doxygen_warnings.txt
           else
+            cd test/api
+            ctest . -j2 --output-on-failure
+            cd ../cli
             ctest . -j2 --output-on-failure
           fi
 
