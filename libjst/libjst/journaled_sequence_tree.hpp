@@ -76,7 +76,7 @@ private:
     sequence_t _reference; //!< The internal reference used for referential compression.
     event_list_type _delta_events{}; //!< The list of stored delta events.
     std::multiset<branch_event_type, std::less<void>> _branch_event_queue{}; //!< The queue of branch events.
-    std::multiset<join_event_type, std::less<join_event_type>> _join_event_queue{}; //!< The queue of join events.
+    std::multiset<join_event_type, std::less<void>> _join_event_queue{}; //!< The queue of join events.
     size_t _size{}; //!< The sequence count.
 
 public:
@@ -87,6 +87,7 @@ public:
     using size_type = typename delta_event_shared_type::size_type; //!< The size type.
     //!\brief The type of the context enumerator.
     using context_enumerator_type = detail::journal_sequence_tree_context_enumerator<type>;
+    using event_type = delta_event_shared_type; //!< The internally stored event type.
     //!\}
 
     /*!\name Constructors, destructor and assignment
@@ -102,6 +103,7 @@ public:
     /*!\brief Constructs the journaled sequence tree with a given reference sequence.
      *
      * \param[in] reference The reference sequence to set.
+     * \param[in] count The number of represented sequences. Defaults to `0`.
      *
      * \details
      *
@@ -109,8 +111,12 @@ public:
      * or moved sequences can be used. To access the reference later one can use the
      * libjst::journaled_sequence_tree::reference member function to access the stored reference.
      * Thus, one can use this reference sequence as long as the journaled sequence tree is valid.
+     *
+     * If count is given, then the constructor initialises the libjst::journaled_sequence_tree to contain `count`
+     * sequences. All of these sequences represent the original reference sequence. The sequence variation can be
+     * added later by the libjst::no_adl::journaled_sequence_tree::type::insert_event interface.
      */
-    type(sequence_type && reference) : _reference{std::move(reference)}
+    type(sequence_type && reference, size_type const count = 0) : _reference{std::move(reference)}, _size(count)
     {}
     //!\}
 
@@ -197,6 +203,101 @@ public:
     size_type size() const
     {
         return _size;
+    }
+
+    /*!\brief Inserts a new event to the existing journal sequence tree.
+     *
+     * \param[in] event The event to insert.
+     *
+     * \returns `true` if the event could be emplaced, `false` otherwise.
+     *
+     * \details
+     *
+     * Only inserts the event
+     *  * if the event position is less than `size()` (less than or equal to `size()` in case of an insertion),
+     *  * if the join poisition is less than `size()` (less than or equal to `size()` in case of an insertion),
+     *  * if no other sequence has an overlapping event,
+     *  * the event coverage has no bit set.
+     *
+     * ### Exception
+     *
+     * Throws std::length_error if the size of the event coverage is not equal to `size()`.
+     * If any exception is thrown, this function has no effect (strong exception guarantee).
+     *
+     * ### Complexity
+     *
+     * Linear in the number of events whose join position is after the branch position of the inserted element.
+     */
+    bool insert(event_type event)
+    {
+        if (event.coverage().size() != size())
+            throw std::length_error{"The coverage length: " + std::to_string(event.coverage().size()) +
+                                    " differs from the actual size: " + std::to_string(size()) + "!"};
+
+        size_type const event_join_position = event.position() + event.deletion_size();
+        size_type const max_size = std::ranges::size(reference()) + event.is_insertion();
+
+        if (event.position() >= max_size || event_join_position >= max_size || event.coverage().none())
+            return false;
+
+        // Find the first event whose join position is not less than the event position of the insert element.
+        auto it = _join_event_queue.lower_bound(event.position());
+
+        for (; it != _join_event_queue.end(); ++it)
+        {
+            // In general, if the join position of the other event is less than or equal to the begin position of the
+            // insert event it can be ignored. The same is true for events whose begin position is greater or equal
+            // than the join position of the insert event.
+            // The only exception is when both events are insertions at the same position. Then their coverage always
+            // needs to be compared. This is checked with the add_one constant.
+            event_type const & other_event = *(it->event_handle());
+            size_t const add_one = other_event.is_insertion() && event.is_insertion();
+            if (((it->position() + add_one) <= event.position()) ||
+                (other_event.position() >= (event_join_position + add_one)))
+                continue;
+
+            coverage_type shared_coverage = other_event.coverage() & event.coverage();
+            if (shared_coverage.any())
+                return false;
+        }
+
+        add_new_event(std::move(event));
+        return true;
+    }
+
+    /*!\brief Inserts a new event to the existing journal sequence tree.
+     *
+     * \tparam args_t A template parameter pack; must model std::constructible_from with
+     *                libjst::no_adl::journaled_sequence_tree::type::event_type.
+     *
+     * \param[in] args The parameter pack to construct the
+     *
+     * \returns `true` if the event could be inserted, `false` otherwise.
+     *
+     * \details
+     *
+     * Only inserts the event
+     *  * if the event position is less than `size()` (less than or equal to `size()` in case of an insertion),
+     *  * if the join poisition is less than `size()` (less than or equal to `size()` in case of an insertion),
+     *  * if no other sequence has an overlapping event,
+     *  * the event coverage has no bit set.
+     *
+     * ### Exception
+     *
+     * Throws std::length_error if the size of the event coverage is not equal to `size()`.
+     * If any exception is thrown, this function has no effect (strong exception guarantee).
+     *
+     * ### Complexity
+     *
+     * Linear in the number of events whose end position is after the inserted position.
+     */
+    template <typename ...args_t>
+    //!\cond
+        requires std::constructible_from<event_type, args_t...>
+    //!\endcond
+    bool emplace(args_t && ...args)
+    {
+        return insert(event_type(std::forward<args_t>(args)...));
     }
 
     /*!\brief Adds a new sequence to the journaled sequence tree based on the given pairwise alignment.
@@ -354,7 +455,13 @@ private:
         new_coverage.resize(size() + 1, false);
         new_coverage.back() = true;
 
-        _delta_events.emplace_back(std::move(delta_event), std::move(new_coverage));
+        add_new_event(event_type{std::move(delta_event), std::move(new_coverage)});
+    }
+
+    //!\overload
+    void add_new_event(event_type && shared_event)
+    {
+        _delta_events.push_back(std::move(shared_event));
         delta_event_shared_type * event_handle = std::addressof(_delta_events.back());
 
         auto branch_event_it = _branch_event_queue.emplace(event_handle);

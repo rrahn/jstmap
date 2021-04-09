@@ -71,6 +71,257 @@ TEST_F(journaled_sequence_tree_fixture, size)
     EXPECT_EQ(jst.size(), 0u);
 }
 
+TEST_F(journaled_sequence_tree_fixture, construct_with_initial_size)
+{
+    sequence_t tmp_reference{reference};
+    jst_t jst{std::move(tmp_reference), 19};
+    EXPECT_EQ(jst.size(), 19u);
+
+    EXPECT_RANGE_EQ(jst.sequence_at(0), jst.reference());
+    EXPECT_RANGE_EQ(jst.sequence_at(18), jst.reference());
+}
+
+TEST_F(journaled_sequence_tree_fixture, insert_deletion_in_empty_jst)
+{
+    using namespace std::literals;
+
+    sequence_t tmp_reference{reference};
+    jst_t jst{std::move(tmp_reference), 5};
+    EXPECT_EQ(jst.size(), 5u);
+
+    using event_t = typename jst_t::event_type;
+    using deletion_t = typename event_t::deletion_type;
+    using coverage_t = typename event_t::coverage_type;
+
+    EXPECT_TRUE(jst.insert(event_t{2, deletion_t{2}, coverage_t{0, 1, 1, 0, 0}}));
+    EXPECT_RANGE_EQ(jst.sequence_at(0), jst.reference());
+    EXPECT_RANGE_EQ(jst.sequence_at(1), "aabbbbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(2), "aabbbbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(3), jst.reference());
+    EXPECT_RANGE_EQ(jst.sequence_at(4), jst.reference());
+}
+
+TEST_F(journaled_sequence_tree_fixture, insert_substitution_in_empty_jst)
+{
+    using namespace std::literals;
+
+    sequence_t tmp_reference{reference};
+    jst_t jst{std::move(tmp_reference), 5};
+    EXPECT_EQ(jst.size(), 5u);
+
+    using event_t = typename jst_t::event_type;
+    using substitution_t = typename event_t::substitution_type;
+    using coverage_t = typename event_t::coverage_type;
+
+    EXPECT_TRUE(jst.insert(event_t{2, substitution_t{"xx"s}, coverage_t{0, 1, 1, 0, 1}}));
+    EXPECT_RANGE_EQ(jst.sequence_at(0), jst.reference());
+    EXPECT_RANGE_EQ(jst.sequence_at(1), "aaxxbbbbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(2), "aaxxbbbbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(3), jst.reference());
+    EXPECT_RANGE_EQ(jst.sequence_at(4), "aaxxbbbbcccc"s);
+}
+
+TEST_F(journaled_sequence_tree_fixture, insert_insetion_in_empty_jst)
+{
+    using namespace std::literals;
+
+    sequence_t tmp_reference{reference};
+    jst_t jst{std::move(tmp_reference), 5};
+    EXPECT_EQ(jst.size(), 5u);
+
+    using event_t = typename jst_t::event_type;
+    using insertion_t = typename event_t::insertion_type;
+    using coverage_t = typename event_t::coverage_type;
+
+    EXPECT_TRUE(jst.insert(event_t{2, insertion_t{"xx"s}, coverage_t{1, 0, 1, 0, 1}}));
+    EXPECT_RANGE_EQ(jst.sequence_at(0), "aaxxaabbbbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(1), jst.reference());
+    EXPECT_RANGE_EQ(jst.sequence_at(2), "aaxxaabbbbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(3), jst.reference());
+    EXPECT_RANGE_EQ(jst.sequence_at(4), "aaxxaabbbbcccc"s);
+}
+
+TEST_F(journaled_sequence_tree_fixture, insert_invalid_coverage)
+{
+    using namespace std::literals;
+
+    sequence_t tmp_reference{reference};
+    jst_t jst{std::move(tmp_reference), 5};
+    EXPECT_EQ(jst.size(), 5u);
+
+    using event_t = typename jst_t::event_type;
+    using insertion_t = typename event_t::insertion_type;
+    using substitution_t = typename event_t::substitution_type;
+    using coverage_t = typename event_t::coverage_type;
+
+    EXPECT_THROW(jst.insert(event_t{2, insertion_t{"xx"s}, coverage_t{1, 0, 1, 0}}), std::length_error);
+    EXPECT_THROW(jst.insert(event_t{2, substitution_t{"xx"s}, coverage_t{0, 1, 1, 0, 1, 0}}), std::length_error);
+}
+
+TEST_F(journaled_sequence_tree_fixture, insert_insertions)
+{
+    using namespace std::literals;
+
+    sequence_t tmp_reference{reference};
+    jst_t jst{std::move(tmp_reference), 5};
+    EXPECT_EQ(jst.size(), 5u);
+
+    using event_t = typename jst_t::event_type;
+    using insertion_t = typename event_t::insertion_type;
+    using coverage_t = typename event_t::coverage_type;
+
+    EXPECT_TRUE(jst.insert(event_t{0, insertion_t{"xx"s}, coverage_t{1, 0, 1, 0, 1}}));
+    EXPECT_TRUE(jst.insert(event_t{0, insertion_t{"oo"s}, coverage_t{0, 1, 0, 0, 0}}));
+    EXPECT_TRUE(jst.insert(event_t{8, insertion_t{"i"s}, coverage_t{0, 1, 0, 1, 1}}));
+    EXPECT_TRUE(jst.insert(event_t{5, insertion_t{"lll"s}, coverage_t{1, 0, 0, 0, 0}}));
+    EXPECT_TRUE(jst.insert(event_t{5, insertion_t{"t"s}, coverage_t{0, 1, 1, 1, 1}}));
+    EXPECT_TRUE(jst.insert(event_t{4, insertion_t{"r"s}, coverage_t{1, 1, 1, 1, 1}}));
+    EXPECT_TRUE(jst.insert(event_t{12, insertion_t{"zzz"s}, coverage_t{0, 0, 0, 1, 0}}));
+
+    EXPECT_RANGE_EQ(jst.sequence_at(0), "xxaaaarblllbbbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(1), "ooaaaarbtbbbicccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(2), "xxaaaarbtbbbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(3), "aaaarbtbbbicccczzz"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(4), "xxaaaarbtbbbicccc"s);
+
+    EXPECT_FALSE(jst.insert(event_t{0, insertion_t{"kkk"s}, coverage_t{0, 0, 0, 0, 1}}));
+    EXPECT_FALSE(jst.insert(event_t{5, insertion_t{"yy"s}, coverage_t{0, 1, 0, 0, 0}}));
+    EXPECT_FALSE(jst.insert(event_t{8, insertion_t{"ppp"s}, coverage_t{1, 1, 1, 1, 1}}));
+    EXPECT_FALSE(jst.insert(event_t{3, insertion_t{"ppp"s}, coverage_t{0, 0, 0, 0, 0}})); // empty coverage
+    EXPECT_FALSE(jst.insert(event_t{13, insertion_t{"ppp"s}, coverage_t{1, 1, 0, 0, 0}})); // out of range.
+
+    EXPECT_RANGE_EQ(jst.sequence_at(0), "xxaaaarblllbbbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(1), "ooaaaarbtbbbicccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(2), "xxaaaarbtbbbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(3), "aaaarbtbbbicccczzz"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(4), "xxaaaarbtbbbicccc"s);
+}
+
+TEST_F(journaled_sequence_tree_fixture, insert_deletions)
+{
+    using namespace std::literals;
+
+    sequence_t tmp_reference{reference};
+    jst_t jst{std::move(tmp_reference), 5};
+    EXPECT_EQ(jst.size(), 5u);
+
+    using event_t = typename jst_t::event_type;
+    using deletion_t = typename event_t::deletion_type;
+    using coverage_t = typename event_t::coverage_type;
+
+    EXPECT_TRUE(jst.insert(event_t{0, deletion_t{1},  coverage_t{1, 0, 1, 0, 1}}));
+    EXPECT_TRUE(jst.insert(event_t{0, deletion_t{10}, coverage_t{0, 1, 0, 0, 0}}));
+    EXPECT_TRUE(jst.insert(event_t{8, deletion_t{3},  coverage_t{0, 0, 1, 0, 1}}));
+    EXPECT_TRUE(jst.insert(event_t{5, deletion_t{3},  coverage_t{0, 0, 0, 0, 1}}));
+    EXPECT_TRUE(jst.insert(event_t{5, deletion_t{1},  coverage_t{0, 0, 1, 1, 0}}));
+    EXPECT_TRUE(jst.insert(event_t{4, deletion_t{1},  coverage_t{1, 0, 0, 1, 1}}));
+
+    EXPECT_RANGE_EQ(jst.sequence_at(0), "aaabbbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(1), "cc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(2), "aaabbbc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(3), "aaaabbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(4), "aaac"s);
+
+    EXPECT_FALSE(jst.insert(event_t{0, deletion_t{2}, coverage_t{0, 0, 0, 0, 1}}));
+    EXPECT_FALSE(jst.insert(event_t{2, deletion_t{1}, coverage_t{0, 1, 0, 0, 0}}));
+    EXPECT_FALSE(jst.insert(event_t{12, deletion_t{3}, coverage_t{1, 1, 1, 1, 1}}));
+    EXPECT_FALSE(jst.insert(event_t{11, deletion_t{2}, coverage_t{1, 1, 1, 1, 1}}));
+    EXPECT_FALSE(jst.insert(event_t{10, deletion_t{5}, coverage_t{1, 1, 1, 1, 1}}));
+    EXPECT_FALSE(jst.insert(event_t{4, deletion_t{2},  coverage_t{1, 0, 0, 1, 1}}));
+
+    EXPECT_RANGE_EQ(jst.sequence_at(0), "aaabbbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(1), "cc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(2), "aaabbbc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(3), "aaaabbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(4), "aaac"s);
+}
+
+TEST_F(journaled_sequence_tree_fixture, insert_substitutions)
+{
+    using namespace std::literals;
+
+    sequence_t tmp_reference{reference};
+    jst_t jst{std::move(tmp_reference), 5};
+    EXPECT_EQ(jst.size(), 5u);
+
+    using event_t = typename jst_t::event_type;
+    using substitution_t = typename event_t::substitution_type;
+    using coverage_t = typename event_t::coverage_type;
+
+    EXPECT_TRUE(jst.insert(event_t{0, substitution_t{"r"s},            coverage_t{1, 0, 1, 0, 1}}));
+    EXPECT_TRUE(jst.insert(event_t{0, substitution_t{"qqqqqqqqqqq"s}, coverage_t{0, 1, 0, 0, 0}}));
+    EXPECT_TRUE(jst.insert(event_t{8, substitution_t{"sss"s},         coverage_t{0, 0, 1, 0, 1}}));
+    EXPECT_TRUE(jst.insert(event_t{5, substitution_t{"ttt"s},         coverage_t{0, 0, 0, 0, 1}}));
+    EXPECT_TRUE(jst.insert(event_t{5, substitution_t{"uuu"s},         coverage_t{0, 0, 1, 1, 0}}));
+    EXPECT_TRUE(jst.insert(event_t{4, substitution_t{"v"s},           coverage_t{1, 0, 0, 1, 1}}));
+
+    EXPECT_RANGE_EQ(jst.sequence_at(0), "raaavbbbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(1), "qqqqqqqqqqqc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(2), "raaabuuusssc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(3), "aaaavuuucccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(4), "raaavtttsssc"s);
+
+    EXPECT_FALSE(jst.insert(event_t{0, substitution_t{"xxx"s}, coverage_t{0, 0, 0, 0, 1}}));
+    EXPECT_FALSE(jst.insert(event_t{2, substitution_t{"xx"s}, coverage_t{0, 1, 0, 0, 0}}));
+    EXPECT_FALSE(jst.insert(event_t{12, substitution_t{"x"s}, coverage_t{1, 1, 1, 1, 1}}));
+    EXPECT_FALSE(jst.insert(event_t{11, substitution_t{"xx"s}, coverage_t{1, 1, 1, 1, 1}}));
+    EXPECT_FALSE(jst.insert(event_t{10, substitution_t{"xxxxx"s}, coverage_t{1, 1, 1, 1, 1}}));
+    EXPECT_FALSE(jst.insert(event_t{4, substitution_t{"xxxx"s},  coverage_t{1, 0, 0, 1, 1}}));
+
+    EXPECT_RANGE_EQ(jst.sequence_at(0), "raaavbbbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(1), "qqqqqqqqqqqc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(2), "raaabuuusssc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(3), "aaaavuuucccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(4), "raaavtttsssc"s);
+}
+
+TEST_F(journaled_sequence_tree_fixture, emplace_event)
+{
+    using namespace std::literals;
+
+    sequence_t tmp_reference{reference};
+    jst_t jst{std::move(tmp_reference), 5};
+    EXPECT_EQ(jst.size(), 5u);
+
+    using event_t = typename jst_t::event_type;
+    using substitution_t = typename event_t::substitution_type;
+    using insertion_t = typename event_t::insertion_type;
+    using deletion_t = typename event_t::deletion_type;
+    using coverage_t = typename event_t::coverage_type;
+
+    EXPECT_TRUE(jst.emplace(0, insertion_t{"p"s},              coverage_t{1, 0, 1, 0, 1}));
+    EXPECT_TRUE(jst.emplace(0, substitution_t{"qqqqqqqqqqq"s}, coverage_t{0, 1, 0, 0, 0}));
+    EXPECT_TRUE(jst.emplace(0, deletion_t{3},                  coverage_t{0, 0, 1, 0, 1}));
+    EXPECT_TRUE(jst.emplace(3, insertion_t{"rrr"s},            coverage_t{1, 0, 0, 0, 1}));
+    EXPECT_TRUE(jst.emplace(3, substitution_t{"sss"s},         coverage_t{1, 0, 0, 1, 0}));
+    EXPECT_TRUE(jst.emplace(3, deletion_t{2},                  coverage_t{0, 0, 1, 0, 0}));
+    EXPECT_TRUE(jst.emplace(4, deletion_t{1},                  coverage_t{0, 0, 0, 0, 1}));
+    EXPECT_TRUE(jst.emplace(5, insertion_t{"tt"s},              coverage_t{0, 0, 1, 0, 1}));
+    EXPECT_TRUE(jst.emplace(5, substitution_t{"uuu"s},          coverage_t{0, 0, 1, 0, 0}));
+    EXPECT_TRUE(jst.emplace(5, deletion_t{1},                  coverage_t{0, 0, 0, 0, 1}));
+    EXPECT_TRUE(jst.emplace(6, deletion_t{1},                  coverage_t{0, 0, 0, 1, 1}));
+    EXPECT_TRUE(jst.emplace(6, insertion_t{"v"s},               coverage_t{1, 0, 0, 0, 1}));
+
+    EXPECT_RANGE_EQ(jst.sequence_at(0), "paaarrrsssvbbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(1), "qqqqqqqqqqqc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(2), "pttuuucccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(3), "aaasssbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(4), "prrrattvbcccc"s);
+
+    EXPECT_FALSE(jst.insert(event_t{0, substitution_t{"xxx"s}, coverage_t{0, 0, 0, 0, 1}}));
+    EXPECT_FALSE(jst.insert(event_t{2, substitution_t{"xx"s}, coverage_t{0, 1, 0, 0, 0}}));
+    EXPECT_FALSE(jst.insert(event_t{12, substitution_t{"x"s}, coverage_t{1, 1, 1, 1, 1}}));
+    EXPECT_FALSE(jst.insert(event_t{11, substitution_t{"xx"s}, coverage_t{1, 1, 1, 1, 1}}));
+    EXPECT_FALSE(jst.insert(event_t{10, substitution_t{"xxxxx"s}, coverage_t{1, 1, 1, 1, 1}}));
+    EXPECT_FALSE(jst.insert(event_t{4, substitution_t{"xxxx"s},  coverage_t{1, 0, 0, 1, 1}}));
+
+    EXPECT_RANGE_EQ(jst.sequence_at(0), "paaarrrsssvbbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(1), "qqqqqqqqqqqc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(2), "pttuuucccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(3), "aaasssbcccc"s);
+    EXPECT_RANGE_EQ(jst.sequence_at(4), "prrrattvbcccc"s);
+}
+
 TEST_F(journaled_sequence_tree_fixture, add)
 {
     sequence_t tmp_reference{reference};
