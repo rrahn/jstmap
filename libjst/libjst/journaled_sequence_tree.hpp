@@ -36,6 +36,7 @@
 #include <libjst/detail/transform_to_delta_events.hpp>
 #include <libjst/journal_decorator.hpp>
 #include <libjst/journal_sequence_tree_context_enumerator.hpp>
+#include <libjst/journal_sequence_tree_range_agent.hpp>
 
 namespace libjst::no_adl
 {
@@ -87,6 +88,8 @@ public:
     using size_type = typename delta_event_shared_type::size_type; //!< The size type.
     //!\brief The type of the context enumerator.
     using context_enumerator_type = detail::journal_sequence_tree_context_enumerator<type>;
+    //!\brief The type of the range agent.
+    using range_agent_type = detail::journal_sequence_tree_range_agent<type>;
     using event_type = delta_event_shared_type; //!< The internally stored event type.
     //!\}
 
@@ -371,7 +374,14 @@ public:
     context_enumerator_type context_enumerator(size_t const context_size) const noexcept
     {
         // TODO: Throw if not valid context.
-        return detail::journal_sequence_tree_context_enumerator<type>{this, context_size};
+        return context_enumerator_type{this, context_size};
+    }
+
+    //!\brief Returns a new range agent over the current journaled sequence tree.
+    template <search_stack_observer ...observer_t>
+    range_agent_type range_agent(size_t const context_size, observer_t & ...observer) const noexcept
+    {
+        return range_agent_type{this, context_size, observer...};
     }
 
     /*!\brief Saves this journaled sequence tree to the given output archive.

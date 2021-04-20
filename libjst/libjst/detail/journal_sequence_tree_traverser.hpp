@@ -560,9 +560,9 @@ private:
         }
     }
 
-    /*!\brief Advances to the next context.
+    /*!\brief Advances to the next position.
      *
-     * \returns `true` if a new valid context is available, `false` otherwise.
+     * \returns `true` if not at end, `false` otherwise.
      *
      * \details
      *
@@ -574,7 +574,7 @@ private:
      * * create a new branch
      * * terminate base branch if fully consumed
      */
-    bool next_context()
+    bool advance()
     {
         assert(!at_end());
 
@@ -599,7 +599,14 @@ private:
         if (is_base_branch() && active_branch().at_end() && !has_more_branch_events(active_branch()))
             drop_branch();
 
-        return at_end() || has_full_context_in_branch();
+        return at_end();
+    }
+
+    //!\brief Advances the context by one position.
+    //!\returns `true` if there is full context available, otherwise `false`.
+    bool next_context()
+    {
+        return advance() || has_full_context_in_branch();
     }
 
     /*!\brief Returns the current context.
@@ -614,6 +621,14 @@ private:
     {
         return active_branch().journal_decorator
              | seqan3::views::slice(context_begin_position(), context_end_position());
+    }
+
+    //!\brief Returns the current value pointed to by the traverser.
+    //!\returns The current pointed-to value.
+    std::ranges::range_value_t<journal_decorator_type> current_value() const noexcept
+    {
+        assert(active_branch().context_position < active_branch().journal_decorator.size());
+        return *(active_branch().journal_decorator.begin() + active_branch().context_position);
     }
 
    /*!\brief Compute the branch coverage that is valid for the current branch.

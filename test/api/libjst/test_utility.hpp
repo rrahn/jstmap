@@ -7,9 +7,12 @@
 
 #pragma once
 
+#include <fstream>
 #include <map>
 #include <string_view>
 #include <vector>
+
+#include <cereal/archives/binary.hpp>
 
 #include <seqan3/alphabet/gap/gapped.hpp>
 #include <seqan3/range/concept.hpp>
@@ -20,6 +23,26 @@
 
 namespace libjst::test
 {
+
+template <typename jst_t>
+jst_t load_jst(std::filesystem::path const & jst_file)
+{
+    using namespace std::literals;
+
+    std::fstream jst_input_stream{jst_file};
+
+    if (!jst_input_stream.good())
+        throw std::runtime_error{"Couldn't open path for loading the jst! The path is ["s + jst_file.string() + "]"s};
+
+    jst_t jst{};
+
+    {
+        cereal::BinaryInputArchive input_archive{jst_input_stream};
+        jst.load(input_archive);
+    }
+
+    return jst;
+}
 
 inline constexpr auto make_gapped = [] (std::string_view const seq) -> std::vector<seqan3::gapped<char>>
 {
