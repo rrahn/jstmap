@@ -43,9 +43,10 @@ namespace libjst
             constexpr auto operator()(sequence_t &&sequence, std::ranges::iterator_t<sequence_t> low, std::ranges::iterator_t<sequence_t> high) const
             {
                 if constexpr (std::ranges::random_access_range<sequence_t>) {
+                    auto min_high = std::max(low, high);
                     return libjst::sequence_breakpoint_simple{
                         .low = std::ranges::distance(std::ranges::begin(sequence), std::move(low)),
-                        .high = std::ranges::distance(std::ranges::begin(sequence), std::move(high))
+                        .high = std::ranges::distance(std::ranges::begin(sequence), std::move(min_high))
                     };
                 }
             }
