@@ -14,11 +14,27 @@
 #pragma once
 
 #include <concepts>
+#include <utility>
 
 #include <libjst/utility/tag_invoke.hpp>
 
 namespace libjst
 {
+
+    namespace exposition_only
+    {
+        template <typename t>
+        concept pair_like = requires (t && obj)
+        {
+            typename std::tuple_element_t<0, std::remove_cvref_t<t>>;
+            typename std::tuple_element_t<1, std::remove_cvref_t<t>>;
+
+            requires std::tuple_size_v<std::remove_cvref_t<t>> == 2;
+
+            { std::get<0>(std::forward<t>(obj)) } -> std::convertible_to<std::tuple_element_t<0, std::remove_cvref_t<t>>>;
+            { std::get<1>(std::forward<t>(obj)) } -> std::convertible_to<std::tuple_element_t<1, std::remove_cvref_t<t>>>;
+        };
+    }
 
     namespace _low_breakend
     {
@@ -27,12 +43,20 @@ namespace libjst
 
         public:
             template <typename breakpoint_t>
-                requires(libjst::tag_or_member_invocable<_tag, breakpoint_t const &>)
+                requires (libjst::tag_or_member_invocable<_tag, breakpoint_t const &>)
             constexpr auto operator()(breakpoint_t const &breakpoint) const
                 noexcept(libjst::nothrow_tag_or_member_invocable<_tag, breakpoint_t const &>)
                     -> libjst::tag_or_member_invoke_result_t<_tag, breakpoint_t const &>
             {
                 return libjst::tag_or_member_invoke(_tag{}, breakpoint);
+            }
+
+            template <typename breakpoint_t>
+                requires (!libjst::tag_or_member_invocable<_tag, breakpoint_t const &>)
+            constexpr auto operator()(breakpoint_t const &breakpoint) const
+            {
+                if constexpr (exposition_only::pair_like<breakpoint_t>)
+                    return std::get<0>(breakpoint);
             }
 
         private:
@@ -59,12 +83,20 @@ namespace libjst
 
         public:
             template <typename breakpoint_t>
-                requires(libjst::tag_or_member_invocable<_tag, breakpoint_t const &>)
+                requires (libjst::tag_or_member_invocable<_tag, breakpoint_t const &>)
             constexpr auto operator()(breakpoint_t const &breakpoint) const
                 noexcept(libjst::nothrow_tag_or_member_invocable<_tag, breakpoint_t const &>)
                     -> libjst::tag_or_member_invoke_result_t<_tag, breakpoint_t const &>
             {
                 return libjst::tag_or_member_invoke(_tag{}, breakpoint);
+            }
+
+            template <typename breakpoint_t>
+                requires (!libjst::tag_or_member_invocable<_tag, breakpoint_t const &>)
+            constexpr auto operator()(breakpoint_t const &breakpoint) const
+            {
+                if constexpr (exposition_only::pair_like<breakpoint_t>)
+                    return std::get<1>(breakpoint);
             }
 
         private:
