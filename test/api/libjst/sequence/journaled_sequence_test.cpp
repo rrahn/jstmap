@@ -7,16 +7,34 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <iostream>
 #include <string>
 #include <vector>
 
 #include <libjst/sequence/journaled_sequence.hpp>
 
+namespace test
+{
+    template <std::ranges::forward_range t>
+    struct debug_sequence
+    {
+        t value;
+
+        template <typename char_t, typename char_traits_t>
+        friend std::basic_ostream<char_t, char_traits_t> & operator<<(std::basic_ostream<char_t, char_traits_t> & stream, debug_sequence const & seq)
+        {
+            for (auto && c : seq.value)
+                stream << c;
+            return stream;
+        }
+    };
+}
+
 SCENARIO("A journaled sequence can be initialized", "[sequence][journaled_sequence]")
 {
     GIVEN("A default initialized journaled sequence")
     {
-        libjst::journaled_sequence<std::vector<char> &, size_t> journaled_sequence{};
+        libjst::journaled_sequence<std::vector<char>> journaled_sequence{};
         THEN("The journaled sequence is empty")
         {
             CHECK(journaled_sequence.empty());
@@ -34,6 +52,8 @@ SCENARIO("A journaled sequence can be initialized", "[sequence][journaled_sequen
             {
                 CHECK_FALSE(journaled_sequence.empty());
                 REQUIRE(journaled_sequence.size() == sequence.size());
+                INFO("actual " << test::debug_sequence{journaled_sequence});
+                INFO("expected " << test::debug_sequence{sequence});
                 REQUIRE(std::ranges::equal(journaled_sequence, sequence));
             }
             AND_THEN("The returned iterator is the begin of the inserted sequence")
