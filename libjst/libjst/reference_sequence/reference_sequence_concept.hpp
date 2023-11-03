@@ -139,8 +139,15 @@ namespace libjst
         libjst::sequence_breakpoint<breakpoint_t> &&
         libjst::reference_sequence<sequence_t> &&
         requires (breakpoint_t && breakpoint, sequence_t && sequence)
-        {
-            { libjst::breakpoint_slice(std::forward<sequence_t>(sequence), std::forward<breakpoint_t>(breakpoint)) } -> libjst::sequence;
-        };
+    {
+        { libjst::breakpoint_slice(std::forward<sequence_t>(sequence), std::forward<breakpoint_t>(breakpoint)) } -> libjst::sequence;
+    };
+
+    template <typename object_t>
+    concept preserving_reference_sequence =
+        libjst::reference_sequence<object_t> &&
+        libjst::reference_sequence<libjst::breakpoint_slice_t<object_t>> &&
+        std::convertible_to<libjst::breakpoint_slice_t<libjst::breakpoint_slice_t<object_t>>, libjst::breakpoint_slice_t<object_t>> &&
+        std::convertible_to<libjst::sequence_breakpoint_t<libjst::breakpoint_slice_t<object_t>>, libjst::sequence_breakpoint_t<object_t>>;
 
 } // namespace libjst
