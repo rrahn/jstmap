@@ -33,8 +33,15 @@ namespace libjst
 
         ///@name Member functions
         ///@{
-        constexpr breakend_t low_breakend() const noexcept { return low; }
-        constexpr breakend_t high_breakend() const noexcept { return high; }
+        constexpr breakend_t & low_breakend() & noexcept { return low; }
+        constexpr breakend_t const & low_breakend() const & noexcept { return low; }
+        constexpr breakend_t && low_breakend() && noexcept { return std::move(low); }
+        constexpr breakend_t const && low_breakend() const && noexcept { return std::move(low); }
+
+        constexpr breakend_t & high_breakend() & noexcept { return high; }
+        constexpr breakend_t const & high_breakend() const & noexcept { return high; }
+        constexpr breakend_t && high_breakend() && noexcept { return std::move(high); }
+        constexpr breakend_t const && high_breakend() const && noexcept { return std::move(high); }
         ///@}
 
         ///@name Conversion operators
