@@ -32,7 +32,7 @@ namespace libjst
                 requires (tag_or_member_invocable<_tag, sequence_t>)
             constexpr auto operator()(sequence_t &&sequence, std::ranges::iterator_t<sequence_t> low, std::ranges::iterator_t<sequence_t> high) const
                 noexcept(libjst::nothrow_tag_or_member_invocable<_tag, sequence_t>)
-                    -> tag_invoke_result_t<_tag, sequence_t>
+                    -> tag_or_member_invoke_result_t<_tag, sequence_t>
             {
                 return libjst::tag_or_member_invoke(_tag{}, (sequence_t &&)sequence, std::move(low), std::move(high));
             }
@@ -56,9 +56,11 @@ namespace libjst
                 requires requires (sequence_t &&sequence, std::ranges::iterator_t<sequence_t> l, std::ranges::iterator_t<sequence_t> h) {
                     { std::forward<sequence_t>(sequence).to_breakpoint(l, h) } -> libjst::sequence_breakpoint;
                 }
-            constexpr friend auto tag_invoke(tag_t<libjst::get_tag_member>, _tag const &, sequence_t &&, std::ranges::iterator_t<sequence_t>, std::ranges::iterator_t<sequence_t>) noexcept
+            constexpr friend auto tag_invoke(tag_t<libjst::member_invoke>, _tag const &, sequence_t && sequence, std::ranges::iterator_t<sequence_t> low, std::ranges::iterator_t<sequence_t> last)
+                noexcept(noexcept(std::forward<sequence_t>(sequence).to_breakpoint(low, last)))
+                -> decltype(std::forward<sequence_t>(sequence).to_breakpoint(low, last))
             {
-                return std::mem_fn(&std::decay_t<sequence_t>::to_breakpoint);
+                return std::forward<sequence_t>(sequence).to_breakpoint(low, last);
             }
         } to_breakpoint;
     }
@@ -74,7 +76,9 @@ namespace libjst
         private:
 
             template <typename breakpoint_t>
-            inline static constexpr bool has_integral_breakends = std::integral<libjst::low_breakend_t<breakpoint_t>> && std::integral<libjst::high_breakend_t<breakpoint_t>>;
+            inline static constexpr bool has_integral_breakends =
+                std::integral<std::remove_reference_t<libjst::low_breakend_t<breakpoint_t>>> &&
+                std::integral<std::remove_reference_t<libjst::high_breakend_t<breakpoint_t>>>;
 
         public:
             template <libjst::sequence sequence_t, libjst::sequence_breakpoint breakpoint_t>
@@ -108,10 +112,11 @@ namespace libjst
                 requires requires (sequence_t &&sequence, breakpoint_t &&breakpoint) {
                     { std::forward<sequence_t>(sequence).breakpoint_slice(std::forward<breakpoint_t>(breakpoint)) };// -> libjst::sequence;
                 }
-            constexpr friend auto tag_invoke(tag_t<libjst::get_tag_member>, _tag const &, sequence_t &&, breakpoint_t &&) noexcept
+            constexpr friend auto tag_invoke(tag_t<libjst::member_invoke>, _tag const &, sequence_t && sequence, breakpoint_t && breakpoint)
+                noexcept(noexcept(std::forward<sequence_t>(sequence).breakpoint_slice(std::forward<breakpoint_t>(breakpoint))))
+                -> decltype(std::forward<sequence_t>(sequence).breakpoint_slice(std::forward<breakpoint_t>(breakpoint)))
             {
-                // one issue with this is that we need to be explicit about the template arguments.
-                return std::mem_fn(&std::decay_t<sequence_t>::breakpoint_slice);
+                return std::forward<sequence_t>(sequence).breakpoint_slice(std::forward<breakpoint_t>(breakpoint));
             }
         } breakpoint_slice;
     }

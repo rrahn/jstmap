@@ -89,8 +89,8 @@ namespace libjst
     using _tag_invoke::tag_invoke_result_t;
     using _tag_invoke::tag_t;
 
-    namespace _get_tag_member {
-
+    namespace _member_invoke
+    {
         inline constexpr struct fn {
             template <typename tag_t, typename ...args_t>
                 requires tag_invocable<fn, tag_t, args_t...>
@@ -99,37 +99,6 @@ namespace libjst
                 -> tag_invoke_result_t<fn, tag_t, args_t...>
             {
                 return tag_invoke(fn{}, (tag_t&&)tag, (args_t &&)args...);
-            }
-        } get_tag_member;
-
-        template <typename tag_t, typename ...args_t>
-        concept get_tag_member_invocable = tag_invocable<_get_tag_member::fn, tag_t, args_t...>;
-
-        template <typename tag_t, typename ...args_t>
-        concept nothrow_get_tag_member_invocable = nothrow_tag_invocable<_get_tag_member::fn, tag_t, args_t...>;
-
-        template <typename tag_t, typename ...args_t>
-            requires get_tag_member_invocable<tag_t, args_t...>
-        using get_tag_member_t = tag_invoke_result_t<_get_tag_member::fn, tag_t, args_t...>;
-    }
-
-    using _get_tag_member::get_tag_member;
-    using _get_tag_member::get_tag_member_invocable;
-    using _get_tag_member::nothrow_get_tag_member_invocable;
-    using _get_tag_member::get_tag_member_t;
-
-    namespace _member_invoke
-    {
-        inline constexpr struct fn {
-            template <typename tag_t, typename ...args_t>
-                requires get_tag_member_invocable<tag_t, args_t...>
-            constexpr auto operator()(tag_t && tag, args_t && ...args) const
-                noexcept(nothrow_get_tag_member_invocable<tag_t, args_t...> &&
-                         std::is_nothrow_invocable_v<get_tag_member_t<tag_t, args_t...>, args_t...>)
-                -> std::invoke_result_t<get_tag_member_t<tag_t, args_t...>, args_t...>
-            {
-                return std::invoke(get_tag_member((tag_t&&)tag, (args_t &&)args...),
-                                   (args_t &&)args...);
             }
         } member_invoke;
 

@@ -43,29 +43,31 @@ namespace libjst
 
         public:
             template <typename breakpoint_t>
-                requires (libjst::tag_or_member_invocable<_tag, breakpoint_t const &>)
-            constexpr auto operator()(breakpoint_t const &breakpoint) const
-                noexcept(libjst::nothrow_tag_or_member_invocable<_tag, breakpoint_t const &>)
-                    -> libjst::tag_or_member_invoke_result_t<_tag, breakpoint_t const &>
+                requires (libjst::tag_or_member_invocable<_tag, breakpoint_t>)
+            constexpr auto operator()(breakpoint_t &&breakpoint) const
+                noexcept(libjst::nothrow_tag_or_member_invocable<_tag, breakpoint_t>)
+                    -> libjst::tag_or_member_invoke_result_t<_tag, breakpoint_t>
             {
-                return libjst::tag_or_member_invoke(_tag{}, breakpoint);
+                return libjst::tag_or_member_invoke(_tag{}, (breakpoint_t &&)breakpoint);
             }
 
             template <typename breakpoint_t>
-                requires (!libjst::tag_or_member_invocable<_tag, breakpoint_t const &>)
-            constexpr auto operator()(breakpoint_t const &breakpoint) const
+                requires (!libjst::tag_or_member_invocable<_tag, breakpoint_t>)
+            constexpr auto operator()(breakpoint_t &&breakpoint) const
             {
                 if constexpr (exposition_only::pair_like<breakpoint_t>)
-                    return std::get<0>(breakpoint);
+                    return std::get<0>((breakpoint_t &&)breakpoint);
             }
 
         private:
 
             template <typename breakpoint_t>
-                requires requires(breakpoint_t const &breakpoint) { { breakpoint.low_breakend() }; }
-            constexpr friend auto tag_invoke(tag_t<libjst::get_tag_member>, _tag const &, breakpoint_t const &) noexcept
+                requires requires(breakpoint_t &&breakpoint) { { std::forward<breakpoint_t>(breakpoint).low_breakend() }; }
+            constexpr friend auto tag_invoke(tag_t<libjst::member_invoke>, _tag const &, breakpoint_t && breakpoint)
+                noexcept(noexcept(std::forward<breakpoint_t>(breakpoint).low_breakend()))
+                -> decltype(std::forward<breakpoint_t>(breakpoint).low_breakend())
             {
-                return std::mem_fn(&breakpoint_t::low_breakend);
+                return std::forward<breakpoint_t>(breakpoint).low_breakend();
             }
 
         } low_breakend;
@@ -83,29 +85,31 @@ namespace libjst
 
         public:
             template <typename breakpoint_t>
-                requires (libjst::tag_or_member_invocable<_tag, breakpoint_t const &>)
-            constexpr auto operator()(breakpoint_t const &breakpoint) const
-                noexcept(libjst::nothrow_tag_or_member_invocable<_tag, breakpoint_t const &>)
-                    -> libjst::tag_or_member_invoke_result_t<_tag, breakpoint_t const &>
+                requires (libjst::tag_or_member_invocable<_tag, breakpoint_t>)
+            constexpr auto operator()(breakpoint_t &&breakpoint) const
+                noexcept(libjst::nothrow_tag_or_member_invocable<_tag, breakpoint_t>)
+                    -> libjst::tag_or_member_invoke_result_t<_tag, breakpoint_t>
             {
-                return libjst::tag_or_member_invoke(_tag{}, breakpoint);
+                return libjst::tag_or_member_invoke(_tag{}, (breakpoint_t &&)breakpoint);
             }
 
             template <typename breakpoint_t>
-                requires (!libjst::tag_or_member_invocable<_tag, breakpoint_t const &>)
-            constexpr auto operator()(breakpoint_t const &breakpoint) const
+                requires (!libjst::tag_or_member_invocable<_tag, breakpoint_t>)
+            constexpr auto operator()(breakpoint_t &&breakpoint) const
             {
                 if constexpr (exposition_only::pair_like<breakpoint_t>)
-                    return std::get<1>(breakpoint);
+                    return std::get<1>((breakpoint_t &&)breakpoint);
             }
 
         private:
 
             template <typename breakpoint_t>
-                requires requires(breakpoint_t const &breakpoint) { { breakpoint.high_breakend() }; }
-            constexpr friend auto tag_invoke(tag_t<libjst::get_tag_member>, _tag const &, breakpoint_t const &) noexcept
+                requires requires(breakpoint_t &&breakpoint) { { std::forward<breakpoint_t>(breakpoint).high_breakend() }; }
+            constexpr friend auto tag_invoke(tag_t<libjst::member_invoke>, _tag const &, breakpoint_t && breakpoint)
+                noexcept(noexcept(std::forward<breakpoint_t>(breakpoint).high_breakend()))
+                -> decltype(std::forward<breakpoint_t>(breakpoint).high_breakend())
             {
-                return std::mem_fn(&breakpoint_t::high_breakend);
+                return std::forward<breakpoint_t>(breakpoint).high_breakend();
             }
         } high_breakend;
     }
@@ -148,10 +152,12 @@ namespace libjst
         private:
 
             template <typename breakpoint_t>
-                requires requires(breakpoint_t const &breakpoint) { { breakpoint.breakend_span() }; }
-            constexpr friend auto tag_invoke(tag_t<libjst::get_tag_member>, _tag const &, breakpoint_t const &) noexcept
+                requires requires(breakpoint_t &&breakpoint) { { std::forward<breakpoint_t>(breakpoint).breakend_span() }; }
+            constexpr friend auto tag_invoke(tag_t<libjst::member_invoke>, _tag const &, breakpoint_t && breakpoint)
+                noexcept(noexcept(std::forward<breakpoint_t>(breakpoint).breakend_span()))
+                -> decltype(std::forward<breakpoint_t>(breakpoint).breakend_span())
             {
-                return std::mem_fn(&breakpoint_t::breakend_span);
+                return std::forward<breakpoint_t>(breakpoint).breakend_span();
             }
         } breakend_span;
     }
@@ -187,5 +193,17 @@ namespace libjst
             { libjst::high_breakend(object) };
             { libjst::breakend_span(object) } -> std::integral;
         };
+
+    /**
+     * @brief Concept describing the constraints for a type modelling a common sequence breakpoint.
+     * @tparam object_t The object type to check.
+     *
+     * A common sequence breakpoint is a sequence breakpoint for which the low and high breakend can be converted to
+     * a common type shared by both breakends.
+     */
+    template <typename object_t>
+    concept common_sequence_breakpoint =
+        libjst::sequence_breakpoint<object_t> &&
+        std::common_with<libjst::low_breakend_t<object_t>, libjst::high_breakend_t<object_t>>;
 
 } // namespace libjst
