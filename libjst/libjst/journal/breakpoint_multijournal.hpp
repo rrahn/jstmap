@@ -23,7 +23,7 @@ namespace libjst
 {
     // TODO: add concept for coverage
     template <libjst::reference_sequence source_t>
-    class basic_multisequence_journal
+    class breakpoint_multijournal
     {
         /// @name Member types
         /// @{
@@ -49,11 +49,11 @@ namespace libjst
         /// @{
     public:
 
-        constexpr basic_multisequence_journal()
+        constexpr breakpoint_multijournal()
             requires std::default_initializable<source_type> &&
                      std::default_initializable<breakpoint_map_type> = default;
 
-        constexpr basic_multisequence_journal(source_type source)
+        constexpr breakpoint_multijournal(source_type source)
             noexcept(std::is_nothrow_move_constructible_v<source_type>)
             : _source{std::move(source)}
         {
@@ -118,7 +118,7 @@ namespace libjst
     };
 
     template <libjst::reference_sequence source_t>
-    class basic_multisequence_journal<source_t>::record_impl
+    class breakpoint_multijournal<source_t>::record_impl
     {
         /// @name Member variables
         /// @{

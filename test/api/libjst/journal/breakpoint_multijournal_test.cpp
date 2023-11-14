@@ -4,7 +4,7 @@
 #include <string>
 #include <ranges>
 
-#include <libjst/journal/basic_multisequence_journal.hpp>
+#include <libjst/journal/breakpoint_multijournal.hpp>
 
 namespace test
 {
@@ -23,12 +23,12 @@ namespace test
     };
 }
 
-SCENARIO("Recording insertions", "[basic_multisequence_journal][insertion]") {
+SCENARIO("Recording insertions", "[breakpoint_multijournal][insertion]") {
     using namespace std::string_literals;
 
-    GIVEN("A basic_multisequence_journal initialized with a std::string source") {
+    GIVEN("A breakpoint_multijournal initialized with a std::string source") {
         std::string source{"AAAACCCCGGGGTTTT"};
-        libjst::basic_multisequence_journal journal{source};
+        libjst::breakpoint_multijournal journal{source};
 
         auto i = GENERATE(Catch::Generators::values({0, 8, 16}));
         WHEN("Inserting a sequence at different positions") {
@@ -68,12 +68,12 @@ SCENARIO("Recording insertions", "[basic_multisequence_journal][insertion]") {
     }
 }
 
-SCENARIO("Recording deletions", "[basic_multisequence_journal][deletion]") {
+SCENARIO("Recording deletions", "[breakpoint_multijournal][deletion]") {
     using namespace std::string_literals;
 
-    GIVEN("A basic_multisequence_journal initialized with a std::string source") {
+    GIVEN("A breakpoint_multijournal initialized with a std::string source") {
         std::string source{"AAAACCCCGGGGTTTT"};
-        libjst::basic_multisequence_journal journal{source};
+        libjst::breakpoint_multijournal journal{source};
 
         WHEN("Recording a deletion at different breakpoints") {
             auto i = GENERATE(Catch::Generators::values({0, 8, 16}));
@@ -122,12 +122,12 @@ SCENARIO("Recording deletions", "[basic_multisequence_journal][deletion]") {
     }
 }
 
-SCENARIO("Recording substitutions", "[basic_multisequence_journal][substitution]") {
+SCENARIO("Recording substitutions", "[breakpoint_multijournal][substitution]") {
     using namespace std::string_literals;
 
-    GIVEN("A basic_multisequence_journal initialized with a std::string source") {
+    GIVEN("A breakpoint_multijournal initialized with a std::string source") {
         std::string source{"AAAACCCCGGGGTTTT"};
-        libjst::basic_multisequence_journal journal{source};
+        libjst::breakpoint_multijournal journal{source};
 
         WHEN("Recording a substitution at different breakpoints") {
             auto i = GENERATE(Catch::Generators::values({0, 8, 16}));
@@ -178,11 +178,11 @@ SCENARIO("Recording substitutions", "[basic_multisequence_journal][substitution]
     }
 }
 
-SCENARIO("Fuzzy testing of recording variants", "[basic_multisequence_journal][fuzzy]")
+SCENARIO("Fuzzy testing of recording variants", "[breakpoint_multijournal][fuzzy]")
 {
-    GIVEN("A basic_multisequence_journal initialized with a std::string source") {
+    GIVEN("A breakpoint_multijournal initialized with a std::string source") {
         std::string source{"AAAACCCCGGGGTTTT"};
-        libjst::basic_multisequence_journal journal{source};
+        libjst::breakpoint_multijournal journal{source};
 
         auto i = GENERATE(take(10, Catch::Generators::random(0, 16)));
         auto j = GENERATE(take(10, Catch::Generators::random(0, 16)));

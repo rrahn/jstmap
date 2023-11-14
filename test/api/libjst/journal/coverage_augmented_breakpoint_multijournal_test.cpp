@@ -14,11 +14,11 @@
 #include <string>
 #include <vector>
 
-#include <libjst/journal/coverage_augmented_multisequence_journal.hpp>
+#include <libjst/journal/coverage_augmented_breakpoint_multijournal.hpp>
 
-SCENARIO("Initializing a coverage_augmented_multisequence_journal") {
+SCENARIO("Initializing a coverage_augmented_breakpoint_multijournal") {
     GIVEN("An empty source") {
-        libjst::coverage_augmented_multisequence_journal<std::string> journal{};
+        libjst::coverage_augmented_breakpoint_multijournal<std::string> journal{};
 
         THEN("The journal should be empty") {
             REQUIRE(journal.empty() == true);
@@ -28,7 +28,7 @@ SCENARIO("Initializing a coverage_augmented_multisequence_journal") {
 
     GIVEN("A preinitialised source") {
         std::string source{"AAAACCCCGGGGTTTT"};
-        libjst::coverage_augmented_multisequence_journal journal{source};
+        libjst::coverage_augmented_breakpoint_multijournal journal{source};
 
         THEN("The journal should be empty") {
             REQUIRE(journal.empty() == true);
@@ -41,9 +41,9 @@ SCENARIO("Initializing a coverage_augmented_multisequence_journal") {
 }
 
 SCENARIO("Recording a sequence with its coverage") {
-    GIVEN("A coverage_augmented_multisequence_journal initialized with a non-empty source") {
+    GIVEN("A coverage_augmented_breakpoint_multijournal initialized with a non-empty source") {
         std::string source{"AAAACCCCGGGGTTTT"};
-        libjst::coverage_augmented_multisequence_journal journal{source};
+        libjst::coverage_augmented_breakpoint_multijournal journal{source};
         using coverage_type = typename decltype(journal)::coverage_type;
         using coverage_domain_type = libjst::coverage_domain_t<coverage_type>;
 
@@ -71,9 +71,9 @@ SCENARIO("Recording a sequence with its coverage") {
 }
 
 SCENARIO("Recording a deletion with its coverage") {
-    GIVEN("A coverage_augmented_multisequence_journal initialized with a non-empty source") {
+    GIVEN("A coverage_augmented_breakpoint_multijournal initialized with a non-empty source") {
         std::string source{"AAAACCCCGGGGTTTT"};
-        libjst::coverage_augmented_multisequence_journal journal{source};
+        libjst::coverage_augmented_breakpoint_multijournal journal{source};
         using coverage_type = typename decltype(journal)::coverage_type;
         using coverage_domain_type = libjst::coverage_domain_t<coverage_type>;
 
@@ -103,9 +103,9 @@ SCENARIO("Recording a deletion with its coverage") {
 SCENARIO("Successfully recording various sequence modifications with their coverages") {
     using namespace std::literals;
 
-    GIVEN("A coverage_augmented_multisequence_journal initialized with a non-empty source") {
+    GIVEN("A coverage_augmented_breakpoint_multijournal initialized with a non-empty source") {
         std::string source{"AAAACCCCGGGGTTTT"};
-        libjst::coverage_augmented_multisequence_journal journal{source};
+        libjst::coverage_augmented_breakpoint_multijournal journal{source};
         using coverage_type = typename decltype(journal)::coverage_type;
         using coverage_domain_type = libjst::coverage_domain_t<coverage_type>;
 

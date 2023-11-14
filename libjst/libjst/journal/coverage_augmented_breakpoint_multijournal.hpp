@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include <libjst/journal/basic_multisequence_journal.hpp>
+#include <libjst/journal/breakpoint_multijournal.hpp>
 #include <libjst/coverage/int_coverage.hpp>
 
 namespace libjst
@@ -21,7 +21,7 @@ namespace libjst
 
     // TODO: add concept for coverage
     template <libjst::reference_sequence source_t>
-    class coverage_augmented_multisequence_journal
+    class coverage_augmented_breakpoint_multijournal
     {
         /// @name Member types
         /// @{
@@ -32,7 +32,7 @@ namespace libjst
         template <bool>
         class iterator_impl;
 
-        using base_journal_t = basic_multisequence_journal<source_t>;
+        using base_journal_t = breakpoint_multijournal<source_t>;
     public:
         using source_type = typename base_journal_t::source_type;
         using sequence_type = typename base_journal_t::sequence_type;
@@ -56,9 +56,9 @@ namespace libjst
         /// @{
     public:
 
-        constexpr coverage_augmented_multisequence_journal() = default;
+        constexpr coverage_augmented_breakpoint_multijournal() = default;
 
-        constexpr explicit coverage_augmented_multisequence_journal(source_type source)
+        constexpr explicit coverage_augmented_breakpoint_multijournal(source_type source)
             noexcept(std::is_nothrow_constructible_v<base_journal_t, source_type>)
             : _journal{std::move(source)}
         {
@@ -131,11 +131,11 @@ namespace libjst
     };
 
     template <typename source_t>
-    coverage_augmented_multisequence_journal(source_t) -> coverage_augmented_multisequence_journal<source_t>;
+    coverage_augmented_breakpoint_multijournal(source_t) -> coverage_augmented_breakpoint_multijournal<source_t>;
 
     template <libjst::reference_sequence source_t>
     template <typename record_t, typename coverage_t>
-    class coverage_augmented_multisequence_journal<source_t>::record_impl
+    class coverage_augmented_breakpoint_multijournal<source_t>::record_impl
     {
         /// @name Member variables
         /// @{
@@ -195,9 +195,9 @@ namespace libjst
 
     template <libjst::reference_sequence source_t>
     template <bool is_const>
-    class coverage_augmented_multisequence_journal<source_t>::iterator_impl
+    class coverage_augmented_breakpoint_multijournal<source_t>::iterator_impl
     {
-        friend class coverage_augmented_multisequence_journal;
+        friend class coverage_augmented_breakpoint_multijournal;
 
         template <bool>
         friend class iterator_impl;
