@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <functional>
 #include <set>
 
 #include <libjst/journal/any_sequence.hpp>
@@ -30,7 +31,7 @@ namespace libjst
     private:
         class record_impl;
 
-        using breakpoint_map_type = std::multiset<record_impl>;
+        using breakpoint_map_type = std::multiset<record_impl, std::less<void>>;
     public:
         using source_type = source_t;
         using sequence_type = libjst::breakpoint_slice_t<source_type const>;
@@ -115,6 +116,27 @@ namespace libjst
             return _breakpoint_map.empty();
         }
         /// @}
+
+        /// @name Lookup
+        /// @{
+        public:
+
+            template <typename breakend_t>
+                requires std::convertible_to<breakend_t, std::remove_cvref_t<libjst::low_breakend_t<breakpoint_type>> const &>
+            constexpr iterator lower_bound(breakend_t const & breakend) const & noexcept
+            {
+                using low_breakend_type = std::remove_cvref_t<libjst::low_breakend_t<breakpoint_type>>;
+                return _breakpoint_map.lower_bound(static_cast<low_breakend_type const &>(breakend));
+            }
+
+            template <typename breakend_t>
+                requires std::convertible_to<breakend_t, std::remove_cvref_t<libjst::low_breakend_t<breakpoint_type>> const &>
+            constexpr iterator upper_bound(breakend_t const & breakend) const & noexcept
+            {
+                using low_breakend_type = std::remove_cvref_t<libjst::low_breakend_t<breakpoint_type>>;
+                return _breakpoint_map.upper_bound(static_cast<low_breakend_type const &>(breakend));
+            }
+        /// @}
     };
 
     template <libjst::reference_sequence source_t>
@@ -173,6 +195,11 @@ namespace libjst
             return lhs.equivalence_rank() <=> rhs.equivalence_rank();
         }
 
+        constexpr friend std::weak_ordering operator<=>(record_impl const & lhs,
+                                                        std::remove_cvref_t<libjst::low_breakend_t<breakpoint_type>> const & breakend) noexcept
+        {
+            return libjst::low_breakend(lhs._breakpoint) <=> breakend;
+        }
         /// @}
 
         /// @name Utilities
