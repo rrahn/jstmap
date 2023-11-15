@@ -1,3 +1,6 @@
+add_catch2_test (breakpoint_sequence_label_test.cpp)
+add_catch2_test (breakpoint_sequence_tree_node_test.cpp)
+
 # add_libjst2_test (journaled_sequence_label_test.cpp)
 add_libjst2_test (volatile_tree_test.cpp)
 add_libjst2_test (labelled_tree_test.cpp)
