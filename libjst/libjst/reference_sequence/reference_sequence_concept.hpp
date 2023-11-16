@@ -98,7 +98,9 @@ namespace libjst
                 {
                     auto segment_begin = std::ranges::begin(sequence) + libjst::low_breakend((breakpoint_t &&)breakpoint);
                     auto segment_end = std::ranges::begin(sequence) + libjst::high_breakend((breakpoint_t &&)breakpoint);
-                    if constexpr (std::ranges::contiguous_range<sequence_t>) {
+                    if constexpr (std::same_as<std::remove_cvref_t<sequence_t>, std::string>) {
+                        return std::string_view{std::move(segment_begin), std::move(segment_end)};
+                    } else if constexpr (std::ranges::contiguous_range<sequence_t>) {
                         return std::span{std::move(segment_begin), std::move(segment_end)};
                     } else {
                         return std::ranges::subrange{std::move(segment_begin), std::move(segment_end)};
