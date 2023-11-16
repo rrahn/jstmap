@@ -59,20 +59,4 @@ template <typename multisequence_journal_t> class breakpoint_multijournal_sequen
     /// @}
 };
 
-namespace _to_sequence_tree_closure
-{
-inline constexpr struct _fn
-{
-    template <typename journal_t>
-    constexpr auto operator()(journal_t const &journal) const
-        noexcept(std::is_nothrow_invocable_v<breakpoint_multijournal_sequence_tree_adapter, journal_t const &>)
-            -> breakpoint_multijournal_sequence_tree_adapter<journal_t>
-    { // we need to store the type that needs to be called later!
-        return breakpoint_multijournal_sequence_tree_adapter{journal};
-    }
-} to_sequence_tree{};
-
-} // namespace _to_sequence_tree_closure
-
-using _to_sequence_tree_closure::to_sequence_tree
 } // namespace libjst
