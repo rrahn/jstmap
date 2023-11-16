@@ -80,7 +80,7 @@ SCENARIO("Recording deletions", "[breakpoint_multijournal][deletion]") {
             auto j = GENERATE(Catch::Generators::values({1, 8, 16}));
 
             auto breakpoint = libjst::to_breakpoint(source, source.begin() + i, source.begin() + j);
-            auto it = journal.record(breakpoint, std::views::empty<char>);
+            auto it = journal.record(breakpoint, std::string{});
 
             THEN ("the journal contains one element") {
                 REQUIRE(journal.size() == 1);
@@ -98,9 +98,9 @@ SCENARIO("Recording deletions", "[breakpoint_multijournal][deletion]") {
                 libjst::to_breakpoint(source, source.begin() + 1, source.begin() + 7)
             }};
 
-            journal.record(breakpoints[0], std::views::empty<char>);
-            journal.record(breakpoints[1], std::views::empty<char>);
-            journal.record(breakpoints[2], std::views::empty<char>);
+            journal.record(breakpoints[0], std::string{});
+            journal.record(breakpoints[1], std::string{});
+            journal.record(breakpoints[2], std::string{});
 
             THEN ("the journal contains three element") {
                 REQUIRE(journal.size() == 3);
