@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <ranges>
 
+#include <libjst/coverage/concept.hpp>
 #include <libjst/coverage/range_domain.hpp>
 #include <libjst/utility/sorted_vector.hpp>
 
