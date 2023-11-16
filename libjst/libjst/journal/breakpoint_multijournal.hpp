@@ -17,7 +17,9 @@
 #include <set>
 
 #include <libjst/journal/any_sequence.hpp>
+#include <libjst/journal/breakpoint_multijournal_sequence_tree_adapter.hpp>
 #include <libjst/reference_sequence/reference_sequence_concept.hpp>
+#include <libjst/sequence_tree/to_sequence_tree.hpp>
 #include <libjst/utility/member_type_trait.hpp>
 
 namespace libjst
@@ -136,6 +138,16 @@ namespace libjst
                 using low_breakend_type = std::remove_cvref_t<libjst::low_breakend_t<breakpoint_type>>;
                 return _breakpoint_map.upper_bound(static_cast<low_breakend_type const &>(breakend));
             }
+        /// @}
+
+        /// @name Non-member functions
+        /// @{
+    public:
+        friend constexpr auto tag_invoke(tag_t<libjst::to_sequence_tree>, breakpoint_multijournal const &self)
+            noexcept(std::is_nothrow_constructible_v<breakpoint_multijournal_sequence_tree_adapter<breakpoint_multijournal>>)
+        {
+            return breakpoint_multijournal_sequence_tree_adapter<breakpoint_multijournal>{self};
+        }
         /// @}
     };
 
