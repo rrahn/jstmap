@@ -81,8 +81,8 @@ template <typename journal_t> class breakpoint_sequence_tree_node
   private:
     explicit constexpr breakpoint_sequence_tree_node(
         journal_t const &journal, journal_iterator_type prev_breakpoint, journal_iterator_type next_breakpoint,
-        std::optional<label_type> label) noexcept(std::is_nothrow_move_constructible_v<label_type>
-                                                      &&std::is_nothrow_move_constructible_v<journal_iterator_type>)
+        std::optional<label_type> label) noexcept(std::is_nothrow_move_constructible_v<label_type> &&
+                                                  std::is_nothrow_move_constructible_v<journal_iterator_type>)
         : _journal{&journal}, _prev_breakpoint{std::move(prev_breakpoint)},
           _next_breakpoint{std::move(next_breakpoint)}, _label{std::move(label)}
     {
@@ -92,6 +92,21 @@ template <typename journal_t> class breakpoint_sequence_tree_node
     /// @name Observers
     /// @{
   public:
+    constexpr label_type const &operator*() const & noexcept
+    {
+        return *_label;
+    }
+
+    constexpr label_type &&operator*() && noexcept
+    {
+        return std::move(*_label);
+    }
+
+    constexpr label_type const *operator->() const noexcept
+    {
+        return std::addressof(*_label);
+    }
+
     constexpr label_type const &value() const &
     {
         return _label.value();
