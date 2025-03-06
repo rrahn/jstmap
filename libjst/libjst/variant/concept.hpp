@@ -20,6 +20,7 @@
 #include <libjst/utility/tag_invoke.hpp>
 
 #include <libjst/variant/alternate_sequence_kind.hpp>
+#include <libjst/reference_sequence/sequence_breakpoint_concept.hpp>
 
 namespace libjst
 {
@@ -209,47 +210,12 @@ namespace libjst
     } // namespace _get_breakpoint
     using _get_breakpoint::get_breakpoint;
 
-    // ----------------------------------------------------------------------------
-    // CPO libjst::low_breakend
-    // ----------------------------------------------------------------------------
-
-    // New version with updated name!
-    namespace _low_breakend {
-        inline constexpr struct _cpo  {
-            template <typename breakpoint_t>
-                requires libjst::tag_invocable<_cpo, breakpoint_t>
-            constexpr auto operator()(breakpoint_t &&bp) const
-                noexcept(libjst::is_nothrow_tag_invocable_v<_cpo, breakpoint_t>)
-                -> libjst::tag_invoke_result_t<_cpo, breakpoint_t>
-            {
-                return libjst::tag_invoke(_cpo{}, (breakpoint_t &&)bp);
-            }
-        } low_breakend;
-    } // namespace _low_breakend
-    using _low_breakend::low_breakend;
-
-    // ----------------------------------------------------------------------------
-    // CPO libjst::high_breakend
-    // ----------------------------------------------------------------------------
-
-    namespace _high_breakend {
-        inline constexpr struct _cpo  {
-            template <typename breakpoint_t>
-                requires libjst::tag_invocable<_cpo, breakpoint_t>
-            constexpr auto operator()(breakpoint_t &&bp) const
-                noexcept(libjst::is_nothrow_tag_invocable_v<_cpo, breakpoint_t>)
-                -> libjst::tag_invoke_result_t<_cpo, breakpoint_t>
-            {
-                return libjst::tag_invoke(_cpo{}, (breakpoint_t &&)bp);
-            }
-        } high_breakend;
-    } // namespace _high_breakend
-    using _high_breakend::high_breakend;
 
     template <typename breakpoint_t>
-    using breakend_t = std::remove_cvref_t<
-                std::common_type_t<std::invoke_result_t<_low_breakend::_cpo, breakpoint_t>,
-                                   std::invoke_result_t<_high_breakend::_cpo, breakpoint_t>>>;
+    using breakend_t =
+        std::remove_cvref_t<
+            std::common_type_t<low_breakend_t<breakpoint_t>, high_breakend_t<breakpoint_t>>
+        >;
 
     // ----------------------------------------------------------------------------
     // CPO libjst::breakpoint_span

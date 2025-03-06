@@ -27,7 +27,7 @@ namespace libjst
     class journaled_sequence_label {
     private:
 
-        using journaled_sequence_type = journaled_sequence<source_t, position_t>;
+        using journaled_sequence_type = journaled_sequence<source_t>;
         using journaled_sequence_iterator = std::ranges::iterator_t<journaled_sequence_type const>;
         using offset_type = std::make_signed_t<position_t>;
 

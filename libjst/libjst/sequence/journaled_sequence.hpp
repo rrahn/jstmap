@@ -17,14 +17,12 @@
 #include <limits>
 #include <ranges>
 
-#include <libjst/sequence/journal_vector.hpp>
+#include <libjst/journal/inline_sequence_journal.hpp>
 
 namespace libjst
 {
 
-    template <
-        std::ranges::random_access_range sequence_t,
-        std::integral sequence_size_t = std::ranges::range_size_t<sequence_t>>
+    template <libjst::preserving_reference_sequence source_t>
     class journaled_sequence
     {
         // ----------------------------------------------------------------------------
@@ -38,18 +36,17 @@ namespace libjst
         // Member Types
         // ----------------------------------------------------------------------------
     private:
-        using journal_type = journal_vector<std::ranges::iterator_t<sequence_t>, sequence_size_t>;
+        using journal_type = inline_sequence_journal<source_t>;
+        using source_type = typename journal_type::source_type;
+        using journal_breakend_type = journal_type::breakend_type;
+        using journal_breakpoint_type = journal_type::breakpoint_type;
         using entry_type = std::ranges::range_value_t<journal_type>;
 
     public:
-        using size_type = typename journal_type::size_type;
+        using size_type = std::ranges::range_size_t<journal_type>;
+        using sequence_type = typename journal_type::sequence_type;
         using iterator = iterator_impl<false>;
         using const_iterator = iterator_impl<true>;
-        using value_type = std::iter_value_t<iterator>;
-        using reference = std::iter_reference_t<iterator>;
-        using const_reference = std::iter_reference_t<const_iterator>;
-        using difference_type = std::iter_difference_t<iterator>;
-        using segment_type = typename entry_type::sequence_type;
 
         // ----------------------------------------------------------------------------
         // Member Variables
@@ -64,11 +61,33 @@ namespace libjst
         // ----------------------------------------------------------------------------
         // Constructors, assignment and destructor
 
-        journaled_sequence() = default;
-
-        journaled_sequence(segment_type initial_sequence)
+        constexpr journaled_sequence()
+            noexcept(std::is_nothrow_default_constructible_v<journal_type>)
+            requires std::default_initializable<journal_type>
+            : _journal{}
         {
-            insert(begin(), std::move(initial_sequence));
+        }
+
+        constexpr journaled_sequence(source_type const & source)
+            noexcept(std::is_nothrow_constructible_v<journal_type, source_type const &>)
+            : _journal{source}
+        {
+        }
+
+        constexpr journaled_sequence(source_type && source)
+            noexcept(std::is_nothrow_constructible_v<journal_type, source_type &&>)
+            : _journal{std::move(source)}
+        {
+        }
+
+        constexpr source_type const & source() const & noexcept
+        {
+            return _journal.source();
+        }
+
+        constexpr source_type source() && noexcept(std::is_nothrow_move_constructible_v<source_type>)
+        {
+            return std::move(_journal).source();
         }
 
         // ----------------------------------------------------------------------------
@@ -97,17 +116,17 @@ namespace libjst
         // ----------------------------------------------------------------------------
         // Capacity
 
-        bool empty() const noexcept
+        constexpr bool empty() const noexcept
         {
             return _journal.empty();
         }
 
-        size_type size() const noexcept
+        constexpr size_type size() const noexcept
         {
-            return _journal.end()->begin_position();
+            return _journal.end()->position();
         }
 
-        size_type max_size() const noexcept
+        constexpr size_type max_size() const noexcept
         {
             return std::numeric_limits<size_type>::max();
         }
@@ -120,37 +139,36 @@ namespace libjst
             _journal.clear();
         }
 
-        iterator insert(const_iterator position, segment_type segment)
+        iterator insert(const_iterator position, sequence_type segment)
         {
             return replace(position, position, std::move(segment));
         }
 
-        iterator erase(const_iterator low)
+        iterator erase(const_iterator from)
         {
-            return erase(low, low + 1);
+            return erase(from, from + 1);
         }
 
-        iterator erase(const_iterator low, const_iterator high)
+        iterator erase(const_iterator from, const_iterator to)
         {
-            assert(low <= high);
-            return replace(std::move(low), std::move(high), segment_type{});
+            assert(from <= to);
+            return replace(std::move(from), std::move(to), sequence_type{});
         }
 
-        iterator replace(const_iterator low, const_iterator high, segment_type segment)
+        iterator replace(const_iterator from, const_iterator to, sequence_type segment)
         {
             return iterator{std::addressof(_journal),
-                            _journal.record_sequence_edit(std::move(low), std::move(high), std::move(segment))};
+                            _journal.record(journal_breakpoint_type{std::move(from), std::move(to)}, std::move(segment))};
         }
     };
 
     // deduction guide
-    template <std::ranges::viewable_range sequence_range_t>
-    journaled_sequence(sequence_range_t &&) -> journaled_sequence<sequence_range_t>;
+    template <libjst::preserving_reference_sequence source_t>
+    journaled_sequence(source_t &&) -> journaled_sequence<std::remove_reference_t<source_t>>;
 
-    template <std::ranges::random_access_range sequence_t,
-              std::integral sequence_size_t>
+    template <libjst::preserving_reference_sequence source_t>
     template <bool is_const>
-    class journaled_sequence<sequence_t, sequence_size_t>::iterator_impl
+    class journaled_sequence<source_t>::iterator_impl
     {
         friend journaled_sequence;
 
@@ -165,8 +183,9 @@ namespace libjst
         using maybe_const_journal_type = std::conditional_t<is_const, journal_type const, journal_type>;
         using journal_iterator = std::ranges::iterator_t<maybe_const_journal_type>;
 
-        using position_type = journal_position<journal_iterator>;
-        using sequence_iterator = typename position_type::sequence_iterator;
+        using journal_record_t = std::iter_reference_t<journal_iterator>;
+        using sequence_type = decltype(std::declval<journal_record_t>().sequence());
+        using sequence_iterator = std::ranges::iterator_t<sequence_type>;
 
     public:
         using value_type = std::iter_value_t<sequence_iterator>;
@@ -191,10 +210,11 @@ namespace libjst
         // Constructors, assignment and destructor
     private:
 
-        explicit iterator_impl(maybe_const_journal_type *journal, position_type journal_position) :
+        explicit iterator_impl(maybe_const_journal_type *journal,
+                               journal_iterator journal_it) :
             _journal{journal},
-            _journal_it{std::move(journal_position.journal_it)},
-            _sequence_it{std::move(journal_position.sequence_it)}
+            _journal_it{std::move(journal_it)},
+            _sequence_it{std::ranges::begin(_journal_it->sequence())}
         {
         }
 
@@ -228,14 +248,14 @@ namespace libjst
         }
     private:
 
-        operator position_type() const & noexcept
+        constexpr operator journal_breakend_type() const & noexcept
         {
-            return position_type{_journal_it, _sequence_it};
+            return journal_breakend_type{_journal_it, _sequence_it};
         }
 
-        operator position_type() && noexcept
+        constexpr operator journal_breakend_type() && noexcept
         {
-            return position_type{std::move(_journal_it), std::move(_sequence_it)};
+            return journal_breakend_type{std::move(_journal_it), std::move(_sequence_it)};
         }
 
         // ----------------------------------------------------------------------------
@@ -244,11 +264,11 @@ namespace libjst
 
         iterator_impl &operator++() noexcept
         {
-            assert(_sequence_it < std::ranges::end(_journal_it->segment()));
-            if (++_sequence_it == std::ranges::end(_journal_it->segment()))
+            assert(_sequence_it < std::ranges::end(_journal_it->sequence()));
+            if (++_sequence_it == std::ranges::end(_journal_it->sequence()))
             {
                 ++_journal_it;
-                _sequence_it = std::ranges::begin(_journal_it->segment());
+                _sequence_it = std::ranges::begin(_journal_it->sequence());
             }
             return *this;
         }
@@ -262,10 +282,18 @@ namespace libjst
 
         iterator_impl &operator+=(difference_type count) noexcept
         {
-            if (auto next_position = current_position() + count; _journal_it->position_is_covered_by(next_position))
+            if (auto next_position = current_position() + count; current_record_covers(next_position)) {
                 _sequence_it += count;
-            else
-                *this = iterator_impl{_journal, _journal->find(next_position)};
+            } else {
+                _journal_it = _journal->lower_bound(next_position);
+                if (static_cast<difference_type>(_journal_it->position()) > next_position)
+                    --_journal_it;
+
+                assert(static_cast<difference_type>(_journal_it->position()) <= next_position);
+                assert(next_position - _journal_it->position() <= std::ranges::size(_journal_it->sequence()));
+                _sequence_it = std::ranges::next(std::ranges::begin(_journal_it->sequence()),
+                                                 next_position - _journal_it->position());
+            }
 
             return *this;
         }
@@ -284,10 +312,10 @@ namespace libjst
 
         iterator_impl &operator--() noexcept
         {
-            if (_sequence_it == std::ranges::begin(_journal_it->segment()))
+            if (_sequence_it == std::ranges::begin(_journal_it->sequence()))
             {
                 --_journal_it;
-                _sequence_it = std::ranges::end(_journal_it->segment());
+                _sequence_it = std::ranges::end(_journal_it->sequence());
             }
             --_sequence_it;
             return *this;
@@ -335,10 +363,17 @@ namespace libjst
     private:
         difference_type current_position() const noexcept
         {
-            assert(static_cast<difference_type>(_journal_it->begin_position()) >= 0);
+            assert(static_cast<difference_type>(_journal_it->position()) >= 0);
 
-            return _journal_it->begin_position() +
-                   std::ranges::distance(std::ranges::begin(_journal_it->segment()), _sequence_it);
+            return _journal_it->position() +
+                   std::ranges::distance(std::ranges::begin(_journal_it->sequence()), _sequence_it);
+        }
+
+        constexpr bool current_record_covers(difference_type next_position) const noexcept
+        {
+            using position_t = typename std::remove_cvref_t<journal_record_t>::size_type;
+            return _journal_it->position() <= static_cast<position_t>(next_position) &&
+                   static_cast<position_t>(next_position) < (_journal_it + 1)->position();
         }
     };
 
