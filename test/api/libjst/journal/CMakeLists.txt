@@ -1,4 +1,0 @@
-add_catch2_test (any_sequence_test.cpp)
-add_catch2_test (breakpoint_multijournal_test.cpp)
-add_catch2_test (coverage_augmented_breakpoint_multijournal_test.cpp)
-add_catch2_test (breakpoint_multijournal_sequence_tree_adapter_test.cpp)

@@ -50,6 +50,17 @@ CPMDeclarePackage (seqan2
                    OPTIONS "SEQAN_BUILD_SYSTEM DEVELOP" "CMAKE_MESSAGE_LOG_LEVEL WARNING"
 )
 
+# libjst
+set (LIBJST_VERSION bb3da768840026bf62a5d9869c04da6c8460a34f)
+CPMDeclarePackage (libjst
+                   NAME libjst
+                   GIT_TAG ${LIBJST_VERSION}
+                   GITHUB_REPOSITORY rrahn/libjst
+                   SYSTEM TRUE
+                   EXCLUDE_FROM_ALL TRUE
+                   OPTIONS "LIBJST_DEVELOPER_MODE OFF" "CMAKE_MESSAGE_LOG_LEVEL WARNING"
+)
+
 # googletest
 set (GOOGLETEST_VERSION 1.16.0)
 CPMDeclarePackage (googletest
