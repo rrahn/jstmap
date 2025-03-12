@@ -45,11 +45,11 @@ CPMUsePackageLock (${CMAKE_CURRENT_LIST_DIR}/cmake/package-lock.cmake)
 
 # Use ccache if available. This speeds up the build process by caching files that have been compiled before.
 CPMGetPackage (use_ccache)
-# CPMGetPackage (hibf)
+CPMGetPackage (libjst)
 CPMGetPackage (sharg)
 CPMGetPackage (seqan3)
 CPMGetPackage (seqan2)
-if (seqan2_ADDED)
+if (seqan2_ADDED AND NOT TARGET seqan2::seqan2)
     add_library (seqan2_seqan2 INTERFACE IMPORTED)
     target_include_directories (seqan2_seqan2 INTERFACE ${seqan2_SOURCE_DIR}/include)
     add_library (seqan2::seqan2 ALIAS seqan2_seqan2)
@@ -68,7 +68,6 @@ find_package(Threads REQUIRED)
 ## APPLICATION
 
 add_subdirectory (libcontrib)
-add_subdirectory (libjst)
 add_subdirectory (jstmap-global)
 add_subdirectory (jstmap-create)
 add_subdirectory (jstmap-index)
