@@ -50,7 +50,7 @@ namespace jstmap
                     auto && cargo = *it;
                     matcher(cargo.sequence(), [&] ([[maybe_unused]] auto && label_finder) {
                         callback(query, match_position{.tree_position{cargo.position()},
-                                                       .label_offset{std::ranges::ssize(cargo.sequence()) - seqan::endPosition(label_finder)}});
+                                                       .label_offset{std::ranges::ssize(cargo.sequence()) - seqan2::endPosition(label_finder)}});
                     });
                 }
             });

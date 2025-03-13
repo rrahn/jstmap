@@ -43,11 +43,11 @@ inline reference_t load_base_sequence(std::filesystem::path const & reference_fi
 }
 
 inline reference_t reference_for_record(std::filesystem::path const & reference_file_path,
-                                        seqan::VcfFileIn const & vcf_file,
-                                        seqan::VcfRecord const & record) {
+                                        seqan2::VcfFileIn const & vcf_file,
+                                        seqan2::VcfRecord const & record) {
     // Load reference sequence!
     return load_base_sequence(reference_file_path,
-                              seqan::toCString(seqan::contigNames(seqan::context(vcf_file))[record.rID]));
+                              seqan2::toCString(seqan2::contigNames(seqan2::context(vcf_file))[record.rID]));
 }
 
 void construct_jst_from_vcf2(std::filesystem::path const & reference_file,
@@ -70,11 +70,11 @@ void construct_jst_from_vcf2(std::filesystem::path const & reference_file,
 
     // ----------------------------------------------------------------------------
     // Open vcf file handle.
-    seqan::VcfFileIn vcf_file{vcf_file_path.c_str()};
-    seqan::VcfHeader vcf_header{};
-    seqan::readHeader(vcf_header, vcf_file);
+    seqan2::VcfFileIn vcf_file{vcf_file_path.c_str()};
+    seqan2::VcfHeader vcf_header{};
+    seqan2::readHeader(vcf_header, vcf_file);
 
-    if (seqan::atEnd(vcf_file))
+    if (seqan2::atEnd(vcf_file))
     {
         log(verbosity_level::standard,
             logging_level::warning,
@@ -87,10 +87,10 @@ void construct_jst_from_vcf2(std::filesystem::path const & reference_file,
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    seqan::VcfRecord record{};
-    seqan::readRecord(record, vcf_file);
+    seqan2::VcfRecord record{};
+    seqan2::readRecord(record, vcf_file);
     reference_t reference = reference_for_record(reference_file, vcf_file, record);
-    uint32_t haplotype_count = seqan::length(seqan::sampleNames(seqan::context(vcf_file))) * 2;
+    uint32_t haplotype_count = seqan2::length(seqan2::sampleNames(seqan2::context(vcf_file))) * 2;
     std::cout << "haplotype_count: " << haplotype_count << "\n";
 
     log(verbosity_level::verbose,
@@ -106,7 +106,7 @@ void construct_jst_from_vcf2(std::filesystem::path const & reference_file,
     log_info("Haplotype count: ", haplotype_count);
     size_t record_count{0};
     variant_stat stat{};
-    while (!seqan::atEnd(vcf_file))
+    while (!seqan2::atEnd(vcf_file))
     {
         // if (record_count++ % 1000 == 0) {
         //     log_debug("Processing record: ", record_count);

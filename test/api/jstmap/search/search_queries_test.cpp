@@ -57,7 +57,7 @@ TEST(chunked_tree_test, recover_all_labels) {
                 matches.push_back(
                     jstmap::match_position{.tree_position{label.position()},
                                            .label_offset{std::ranges::ssize(label.sequence()) -
-                                                         seqan::endPosition(hystk_finder)}});
+                                                         seqan2::endPosition(hystk_finder)}});
             });
         }
     };
@@ -188,7 +188,7 @@ TEST(chunked_tree_test, bin_extension) {
                 occurrences.push_back(
                     jstmap::match_position{.tree_position{label.position()},
                                            .label_offset{std::ranges::ssize(label.sequence()) -
-                                                         seqan::endPosition(hystk_finder)}});
+                                                         seqan2::endPosition(hystk_finder)}});
             });
         }
         return occurrences;

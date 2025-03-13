@@ -72,7 +72,7 @@ static void naive_search_benchmark(benchmark::State & state, args_t && ...args)
     size_t total_runs = sequence_count / batch_size;
     std::vector<sequence_t> batch{batch_size, rcs_store.source()};
 
-    seqan::Pattern<sequence_t, seqan::Horspool> pattern{query};
+    seqan2::Pattern<sequence_t, seqan2::Horspool> pattern{query};
 
     size_t hit_count{};
     for (auto _ : state)
@@ -80,8 +80,8 @@ static void naive_search_benchmark(benchmark::State & state, args_t && ...args)
         for (size_t run = 0; run < total_runs; ++run) {
             std::ranges::for_each(batch, [&] (auto const & seq) {
                 using range_t = std::remove_reference_t<decltype(seq)>;
-                seqan::Finder<range_t> finder{seq};
-                while (seqan::find(finder, pattern)) {
+                seqan2::Finder<range_t> finder{seq};
+                while (seqan2::find(finder, pattern)) {
                     ++hit_count;
                 }
             });
