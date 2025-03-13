@@ -12,7 +12,7 @@
 #include <random>
 #include <ranges>
 
-#include <libcontrib/seqan/alphabet.hpp>
+#include <libspm/seqan/alphabet.hpp>
 
 #include <libjst/sequence_tree/coloured_tree.hpp>
 #include <libjst/sequence_tree/labelled_tree.hpp>
@@ -29,7 +29,7 @@
 #include <jstmap/search/bucket.hpp>
 #include <jstmap/search/bucket_searcher.hpp>
 
-using jst::contrib::operator""_dna5;
+using spm::operator""_dna5;
 
 struct sample_position {
     libjst::seek_position position;

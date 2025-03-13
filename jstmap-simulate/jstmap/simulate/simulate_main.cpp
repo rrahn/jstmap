@@ -18,12 +18,12 @@
 #include <seqan3/argument_parser/validators.hpp>
 #include <seqan3/io/sequence_file/output.hpp>
 
-#include <libcontrib/execute/for_each_stream.hpp>
-#include <libcontrib/execute/make_sender.hpp>
-#include <libcontrib/execute/make_stream.hpp>
-#include <libcontrib/execute/run.hpp>
-#include <libcontrib/execute/then.hpp>
-#include <libcontrib/execute/transform_stream.hpp>
+#include <libspm/execute/for_each_stream.hpp>
+#include <libspm/execute/make_sender.hpp>
+#include <libspm/execute/make_stream.hpp>
+#include <libspm/execute/run.hpp>
+#include <libspm/execute/then.hpp>
+#include <libspm/execute/transform_stream.hpp>
 
 #include <jstmap/global/search_matches.hpp>
 #include <jstmap/global/all_matches.hpp>

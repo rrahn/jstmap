@@ -18,7 +18,7 @@
 
 TEST(jstmap_index, load_sequence)
 {
-    using jst::contrib::operator""_dna4;
+    using spm::operator""_dna4;
 
     std::filesystem::path input_file{DATADIR"in.fasta"};
     std::vector actual_sequences = jstmap::load_sequences(input_file);

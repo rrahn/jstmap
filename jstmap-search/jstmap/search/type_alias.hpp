@@ -20,7 +20,7 @@ namespace jstmap
 {
 
 using bin_sequence_t = std::views::all_t<reference_t const &>;
-using bin_t = seqan::StringSet<bin_sequence_t>;
+using bin_t = seqan2::StringSet<bin_sequence_t>;
 
 // Query types
 using search_queries_type = std::vector<search_query>;

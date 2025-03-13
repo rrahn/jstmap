@@ -163,7 +163,7 @@ namespace just::bench
                                     std::views::transform([] (jstmap::search_query const & query) {
                                         return std::views::all(query.value().sequence());
                                     }));
-                auto tree = trees[chunk] | tree_closure(jst::contrib::window_size(pattern));
+                auto tree = trees[chunk] | tree_closure(spm::window_size(pattern));
                 auto traverser = make_traverser(tree);
                 for (auto it = traverser.begin(); it != traverser.end(); ++it) {
                     auto && cargo = *it;

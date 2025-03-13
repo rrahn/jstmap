@@ -29,7 +29,7 @@ namespace just::bench
     class state_manager {
     private:
 
-        using state_t = jst::contrib::matcher_state_t<matcher_t>;
+        using state_t = spm::matcher_state_t<matcher_t>;
         using state_stack_t = std::stack<state_t>;
 
         matcher_t _matcher{};
@@ -81,7 +81,7 @@ namespace just::bench
                 path.subscribe(manager);
                 return path;
             });
-            this->processed_bytes = base_t::total_bytes(jst::contrib::window_size(matcher));
+            this->processed_bytes = base_t::total_bytes(spm::window_size(matcher));
         }
     };
 }  // namespace just::bench

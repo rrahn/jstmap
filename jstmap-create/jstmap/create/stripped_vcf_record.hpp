@@ -62,11 +62,11 @@ namespace jstmap
             _domain{std::move(domain)},
             _stat{&stat}
         {
-            auto & file_context = seqan::context(vcf_file);
-            _sample_count = seqan::length(seqan::sampleNames(file_context));
+            auto & file_context = seqan2::context(vcf_file);
+            _sample_count = seqan2::length(seqan2::sampleNames(file_context));
             _haplotype_count = _sample_count << 1; // TODO: detect ploidy
-            read_record(file_context, directionIterator(vcf_file, seqan::Input{}));
-            _chrom_id = nameToId(contigNamesCache(file_context), seqan::CharString{_chrom_name});
+            read_record(file_context, directionIterator(vcf_file, seqan2::Input{}));
+            _chrom_id = nameToId(contigNamesCache(file_context), seqan2::CharString{_chrom_name});
         }
 
         template <typename vcf_context_t>
@@ -93,7 +93,7 @@ namespace jstmap
 
         template <typename TForwardIter, typename TNameStore, typename TNameStoreCache, typename TStorageSpec>
         inline void
-        read_record(seqan::VcfIOContext<TNameStore, TNameStoreCache, TStorageSpec> & context, TForwardIter & iter)
+        read_record(seqan2::VcfIOContext<TNameStore, TNameStoreCache, TStorageSpec> & context, TForwardIter & iter)
         {
             if (_sample_count == 0)
                 return;

@@ -51,7 +51,7 @@ namespace just::bench
             base_t::run(state, make_pattern, tree_closure, [] (auto const & tree) {
                 return libjst::tree_traverser_base{tree};
             });
-            this->processed_bytes = base_t::total_bytes(jst::contrib::window_size(matcher));
+            this->processed_bytes = base_t::total_bytes(spm::window_size(matcher));
         }
     };
 }  // namespace just::bench

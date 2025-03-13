@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <libcontrib/matcher/horspool_matcher.hpp>
+#include <libspm/matcher/horspool_matcher.hpp>
 #include <libjst/traversal/state_oblivious_traverser.hpp>
 #include <libjst/sequence_tree/seekable_tree.hpp>
 
@@ -32,16 +32,16 @@ namespace jstmap
         constexpr void operator()(haystack_type && haystack, search_queries_type const & bucket, callback_t && callback) const {
 
             std::ranges::for_each(bucket, [&] (search_query const & query) {
-                jst::contrib::horspool_matcher matcher{query.value().sequence()};
+                spm::horspool_matcher matcher{query.value().sequence()};
 
-                if (jst::contrib::window_size(matcher) == 0)
+                if (spm::window_size(matcher) == 0)
                     return;
 
                 auto search_tree = haystack | libjst::labelled()
                                             | libjst::coloured()
-                                            | libjst::trim(jst::contrib::window_size(matcher) - 1)
+                                            | libjst::trim(spm::window_size(matcher) - 1)
                                             | libjst::prune_unsupported()
-                                            | libjst::left_extend(jst::contrib::window_size(matcher) - 1)
+                                            | libjst::left_extend(spm::window_size(matcher) - 1)
                                             | libjst::merge() // make big nodes
                                             | libjst::seek();
 
@@ -50,7 +50,7 @@ namespace jstmap
                     auto && cargo = *it;
                     matcher(cargo.sequence(), [&] ([[maybe_unused]] auto && label_finder) {
                         callback(query, match_position{.tree_position{cargo.position()},
-                                                       .label_offset{std::ranges::ssize(cargo.sequence()) - seqan::endPosition(label_finder)}});
+                                                       .label_offset{std::ranges::ssize(cargo.sequence()) - seqan2::endPosition(label_finder)}});
                     });
                 }
             });

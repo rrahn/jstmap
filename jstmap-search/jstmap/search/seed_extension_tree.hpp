@@ -14,8 +14,8 @@
 
 #include <concepts>
 
-#include <libcontrib/closure_adaptor.hpp>
-#include <libcontrib/std/tag_invoke.hpp>
+#include <libspm/closure_adaptor.hpp>
+#include <libspm/std/tag_invoke.hpp>
 
 #include <libjst/sequence_tree/concept.hpp>
 #include <libjst/sequence_tree/breakend_site_min.hpp>
@@ -213,10 +213,10 @@ namespace jstmap
 
             template <std::unsigned_integral extension_size_t>
             constexpr auto operator()(match_position start_position, extension_size_t extension_size) const
-                noexcept(std::is_nothrow_invocable_v<std::tag_t<jst::contrib::make_closure>, _extend_from, match_position, extension_size_t>)
-                -> jst::contrib::closure_result_t<_extend_from, match_position, extension_size_t>
+                noexcept(std::is_nothrow_invocable_v<std::tag_t<spm::make_closure>, _extend_from, match_position, extension_size_t>)
+                -> spm::closure_result_t<_extend_from, match_position, extension_size_t>
             {
-                return jst::contrib::make_closure(_extend_from{}, std::move(start_position), extension_size);
+                return spm::make_closure(_extend_from{}, std::move(start_position), extension_size);
             }
         };
         inline constexpr _extend_from extend_from{};

@@ -5,7 +5,7 @@ target_include_directories (jstmap_global_base INTERFACE ../jstmap-global
                                                          seqan3::seqan3
                                                          ${SEQAN_INCLUDE_DIRS})
 target_compile_features (jstmap_global_base INTERFACE cxx_std_20)
-target_link_libraries (jstmap_global_base INTERFACE libjst::libjst libcontrib::libcontrib seqan3::seqan3 ${SEQAN_LIBRARIES})
+target_link_libraries (jstmap_global_base INTERFACE libjst::libjst libspm::libspm seqan3::seqan3 ${SEQAN_LIBRARIES})
 # GCC12 and above: Disable warning about std::hardware_destructive_interference_size not being ABI-stable.
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12)

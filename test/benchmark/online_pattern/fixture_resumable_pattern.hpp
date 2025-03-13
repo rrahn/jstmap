@@ -29,7 +29,7 @@ namespace just::bench
     class state_manager {
     private:
 
-        using state_t = jst::contrib::matcher_state_t<matcher_t>;
+        using state_t = spm::matcher_state_t<matcher_t>;
         using state_stack_t = std::stack<state_t>;
 
         matcher_t _matcher{};
@@ -67,7 +67,7 @@ namespace just::bench
         void run(::benchmark::State & state, matcher_t matcher)
         {
             auto tree_closure = libjst::labelled() | libjst::coloured()
-                                                   | libjst::trim(jst::contrib::window_size(matcher) - 1)
+                                                   | libjst::trim(spm::window_size(matcher) - 1)
                                                    | libjst::prune()
                                                    | libjst::merge();
             state_manager manager{matcher};

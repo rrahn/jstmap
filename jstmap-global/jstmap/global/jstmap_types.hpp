@@ -18,7 +18,7 @@
 
 #include <seqan3/io/sequence_file/input.hpp>
 
-#include <libcontrib/seqan/alphabet.hpp>
+#include <libspm/seqan/alphabet.hpp>
 
 #include <libjst/rcms/compressed_multisequence.hpp>
 #include <libjst/rcms/rcs_store.hpp>
@@ -27,7 +27,7 @@
 namespace jstmap
 {
 
-using alphabet_t = jst::contrib::dna5;
+using alphabet_t = spm::dna5;
 using coverage_t = libjst::int_coverage<uint32_t>;
 using reference_t = std::vector<alphabet_t>;
 using sequence_collection_t = std::vector<reference_t>;
@@ -40,7 +40,7 @@ using variant_t = std::ranges::range_value_t<cms_t>;
 struct sequence_input_traits : public seqan3::sequence_file_input_default_traits_dna
 {
     using sequence_alphabet = alphabet_t;
-    using sequence_legal_alphabet = jst::contrib::dna15; // conversion?
+    using sequence_legal_alphabet = spm::dna15; // conversion?
     static_assert(seqan3::explicitly_convertible_to<sequence_legal_alphabet, sequence_alphabet>);
 };
 

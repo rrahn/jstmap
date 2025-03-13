@@ -7,14 +7,14 @@
 
 #include <benchmark/benchmark.h>
 
-#include <libcontrib/matcher/myers_matcher.hpp>
+#include <libspm/matcher/myers_matcher.hpp>
 
 #include "fixture_oblivious_pattern_ibf.hpp"
 
 namespace just::bench {
 
 BENCHMARK_TEMPLATE_DEFINE_F(fixture_oblivious_pattern_ibf, myers, capture<&chr22_needle64_ibf1024>)(benchmark::State& state) {
-    run(state, jst::contrib::myers_matcher(needle(), state.range(1)));
+    run(state, spm::myers_matcher(needle(), state.range(1)));
 }
 
 BENCHMARK_REGISTER_F(fixture_oblivious_pattern_ibf, myers)

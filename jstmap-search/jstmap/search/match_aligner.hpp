@@ -17,7 +17,7 @@
 #include <seqan3/alignment/configuration/align_config_method.hpp>
 #include <seqan3/alignment/scoring/nucleotide_scoring_scheme.hpp>
 
-#include <libcontrib/std/tag_invoke.hpp>
+#include <libspm/std/tag_invoke.hpp>
 
 #include <libjst/sequence_tree/coloured_tree.hpp>
 #include <libjst/sequence_tree/labelled_tree.hpp>

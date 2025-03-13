@@ -14,7 +14,7 @@
 
 #include <stack>
 
-#include <libcontrib/matcher/myers_prefix_matcher_restorable.hpp>
+#include <libspm/matcher/myers_prefix_matcher_restorable.hpp>
 #include <libjst/sequence_tree/labelled_tree.hpp>
 #include <libjst/sequence_tree/coloured_tree.hpp>
 #include <libjst/sequence_tree/merge_tree.hpp>
@@ -57,7 +57,7 @@ namespace jstmap
                 return;
             }
 
-            jst::contrib::restorable_myers_prefix_matcher extender{_needle, _error_count};
+            spm::restorable_myers_prefix_matcher extender{_needle, _error_count};
 
             std::ptrdiff_t distance_to_end = std::ranges::ssize(seed_cargo.sequence()) - endPosition(seed_finder);
             match_position start{.tree_position = seed_cargo.position(),
@@ -69,7 +69,7 @@ namespace jstmap
                                           | libjst::prune()
                                           | libjst::merge()
                                           | libjst::seek()
-                                          | jstmap::extend_from(start, jst::contrib::window_size(extender));
+                                          | jstmap::extend_from(start, spm::window_size(extender));
 
             libjst::tree_traverser_base suffix_traverser{extend_tree};
             extension_state_manager manager{extender};

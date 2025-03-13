@@ -13,7 +13,7 @@
 #include <jstmap/global/load_jst.hpp>
 #include <jstmap/global/match_position.hpp>
 
-#include <libcontrib/matcher/horspool_matcher.hpp>
+#include <libspm/matcher/horspool_matcher.hpp>
 
 #include <libjst/sequence_tree/chunked_tree.hpp>
 #include <libjst/sequence_tree/coloured_tree.hpp>
@@ -27,13 +27,13 @@
 #include <libjst/traversal/tree_traverser_base.hpp>
 
 TEST(chunked_tree_test, recover_all_labels) {
-    using jst::contrib::operator""_dna5;
+    using spm::operator""_dna5;
     auto seq = "CACACACTCAGCATCACACAGGTGAACGTGCTGCAGATGCAGGCAGTCTGGCCTCACTGGCTGCCTCCCTCTACCCAGGCTGCCTCCCTGTACCCAGGCT"_dna5;
-    jst::contrib::horspool_matcher matcher{seq};
+    spm::horspool_matcher matcher{seq};
 
     jstmap::rcs_store_t rcsdb = jstmap::load_jst("/Users/rmaerker/Development/jstmap/build/data/ALL.chr22.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.jst");
 
-    size_t const window_size = jst::contrib::window_size(matcher) - 1;
+    size_t const window_size = spm::window_size(matcher) - 1;
     auto base_tree = libjst::make_volatile(rcsdb);
     auto chunked_base_tree = base_tree | libjst::chunk(1000u, window_size);
 
@@ -57,7 +57,7 @@ TEST(chunked_tree_test, recover_all_labels) {
                 matches.push_back(
                     jstmap::match_position{.tree_position{label.position()},
                                            .label_offset{std::ranges::ssize(label.sequence()) -
-                                                         seqan::endPosition(hystk_finder)}});
+                                                         seqan2::endPosition(hystk_finder)}});
             });
         }
     };
@@ -96,14 +96,14 @@ TEST(chunked_tree_test, recover_all_labels) {
 // Ref label:  GCCATCCCACAGAAGAGAAAACAGACCAGTAATTCACACACTCAGCATCACACAGGTGAACGTGCTGCAGATGCAGGCAGTCTGGCCTCACTGG|CTGCCGCCCTCTACCCAGGCTGCCTCCCTGTACACAGGCTGCCTCCCTGTGCCCAGGCTGCCTCCCTGCGTACAGTCCACCATGCCAGG|GCCCGGAGCATGGTGG
 
 TEST(chunked_tree_test, unwrap_bin_border) {
-    using jst::contrib::operator""_dna5;
+    using spm::operator""_dna5;
     auto seq = "CACACACTCAGCATCACACAGGTGAACGTGCTGCAGATGCAGGCAGTCTGGCCTCACTGGCTGCCTCCCTCTACCCAGGCTGCCTCCCTGTACCCAGGCT"_dna5;
-    jst::contrib::horspool_matcher matcher{seq};
+    spm::horspool_matcher matcher{seq};
 
     jstmap::rcs_store_t rcsdb = jstmap::load_jst("/Users/rmaerker/Development/jstmap/build/data/ALL.chr22.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.jst");
 
     // auto chunked_base_tree = libjst::make_volatile(rcsdb) | libjst::chunk(1000u);
-    size_t const window_size = jst::contrib::window_size(matcher) - 1;
+    size_t const window_size = spm::window_size(matcher) - 1;
     auto tree_adaptor = libjst::labelled()
                       | libjst::coloured()
                       | libjst::trim(window_size)
@@ -139,7 +139,7 @@ TEST(chunked_tree_test, unwrap_bin_border) {
     auto cargo = *target_node;
     auto label = cargo.sequence();
     size_t end_offset = std::ranges::size(label) - 49;
-    size_t begin_offset = end_offset - jst::contrib::window_size(matcher);
+    size_t begin_offset = end_offset - spm::window_size(matcher);
     seqan3::debug_stream << "Seek slice: " << (label | seqan3::views::slice(begin_offset, end_offset)) << "\n";
     seqan3::debug_stream << "Seek label: " << label << "\n";
     auto const & ref = base_tree.data().source();
@@ -161,7 +161,7 @@ TEST(chunked_tree_test, bin_extension) {
 // Pattern:                                             AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA|AAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAGAAAAAA
 // Ref label:   AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA|AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
-    using jst::contrib::operator""_dna5;
+    using spm::operator""_dna5;
     auto ref = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAN"_dna5;
 
     jstmap::rcs_store_t rcsdb{std::move(ref), 4};
@@ -177,7 +177,7 @@ TEST(chunked_tree_test, bin_extension) {
     rcsdb.add(189, jstmap::variant_t{'G'_dna5}, jstmap::coverage_t{1, 1, 0, 0});
 
     auto needle = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAGAAAAAA"_dna5;
-    jst::contrib::horspool_matcher matcher{needle};
+    spm::horspool_matcher matcher{needle};
 
     auto search = [&] (auto const & jst) {
         std::vector<jstmap::match_position> occurrences{};
@@ -188,13 +188,13 @@ TEST(chunked_tree_test, bin_extension) {
                 occurrences.push_back(
                     jstmap::match_position{.tree_position{label.position()},
                                            .label_offset{std::ranges::ssize(label.sequence()) -
-                                                         seqan::endPosition(hystk_finder)}});
+                                                         seqan2::endPosition(hystk_finder)}});
             });
         }
         return occurrences;
     };
 
-    size_t const window_size = jst::contrib::window_size(matcher) - 1;
+    size_t const window_size = spm::window_size(matcher) - 1;
     auto chunked_base_tree = libjst::make_volatile(rcsdb) | libjst::chunk(100u, window_size);
     auto tree_adaptor = libjst::labelled()
                       | libjst::coloured()

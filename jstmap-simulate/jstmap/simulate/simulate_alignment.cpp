@@ -40,23 +40,23 @@ std::map<size_t, short> generate_random_positions(size_t length, size_t n, rando
 }
 
 template <std::uniform_random_bit_generator random_generator_t>
-seqan3::gapped<jst::contrib::dna5> random_char(random_generator_t & generator)
+seqan3::gapped<spm::dna5> random_char(random_generator_t & generator)
 {
     std::uniform_int_distribution<short> distr{0, 3};
     std::array tmp{'A', 'C', 'G', 'T'};
-    return static_cast<seqan3::gapped<jst::contrib::dna5> >(
-        seqan3::assign_char_to(tmp[distr(generator)], jst::contrib::dna5{}));
+    return static_cast<seqan3::gapped<spm::dna5> >(
+        seqan3::assign_char_to(tmp[distr(generator)], spm::dna5{}));
 }
 
 template <std::uniform_random_bit_generator random_generator_t>
-seqan3::gapped<jst::contrib::dna5> random_char(seqan3::gapped<jst::contrib::dna5> old_char, random_generator_t & generator)
+seqan3::gapped<spm::dna5> random_char(seqan3::gapped<spm::dna5> old_char, random_generator_t & generator)
 {
     std::uniform_int_distribution<short> distr{0, 3};
     std::array tmp{'A', 'C', 'G', 'T'};
-    seqan3::gapped<jst::contrib::dna5> new_char;
+    seqan3::gapped<spm::dna5> new_char;
     do
     {
-        new_char = seqan3::assign_char_to(tmp[distr(generator)], jst::contrib::dna5{});
+        new_char = seqan3::assign_char_to(tmp[distr(generator)], spm::dna5{});
     } while (new_char == old_char);
     return new_char;
 }

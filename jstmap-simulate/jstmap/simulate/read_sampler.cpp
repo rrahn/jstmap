@@ -12,7 +12,7 @@
 
 #include <ranges>
 
-#include <libcontrib/seqan/alphabet.hpp>
+#include <libspm/seqan/alphabet.hpp>
 
 #include <libjst/sequence_tree/coloured_tree.hpp>
 #include <libjst/sequence_tree/labelled_tree.hpp>
@@ -100,7 +100,7 @@ namespace jstmap
                 auto read_begin = std::ranges::next(std::ranges::begin(label), sample_begin);
                 auto read_end = std::ranges::next(std::ranges::begin(label), sample_end);
                 read_type sample{read_begin, read_end};
-                using jst::contrib::operator""_dna5;
+                using spm::operator""_dna5;
                 if (std::ranges::none_of(sample, [] (auto && symbol) { return symbol == 'N'_dna5; })) {
                     sampled_reads.emplace_back(std::move(sample),
                                                match_position{.tree_position = cargo.position(),

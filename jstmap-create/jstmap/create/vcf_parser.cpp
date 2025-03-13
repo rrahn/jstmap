@@ -35,7 +35,7 @@
 // class augmented_vcf_record
 // {
 //     //!\brief The internally used shared delta event type.
-//     using shared_event_type = libjst::detail::delta_event_shared<jst::contrib::dna5>;
+//     using shared_event_type = libjst::detail::delta_event_shared<spm::dna5>;
 //     //!\brief The pure delta event type.
 //     using event_type = typename shared_event_type::delta_event_type;
 //     //!\brief The substitution type.
@@ -50,11 +50,11 @@
 //     using coverage_type = typename shared_event_type::coverage_type;
 
 //     //!\brief The header stored with the record.
-//     seqan::VcfHeader _header{};
+//     seqan2::VcfHeader _header{};
 //     //!\brief The default vcf io context.
-//     seqan::VcfIOContext<> _io_context{};
+//     seqan2::VcfIOContext<> _io_context{};
 //     //!\brief The actual record which is augmented.
-//     seqan::VcfRecord _record{};
+//     seqan2::VcfRecord _record{};
 
 //     //!\brief How many samples are represented.
 //     size_t _sample_count{0};
@@ -70,20 +70,20 @@
 //      * \{
 //      */
 //     augmented_vcf_record() = default;
-//     augmented_vcf_record(seqan::VcfHeader && header, seqan::VcfIOContext<> const & io_context) :
+//     augmented_vcf_record(seqan2::VcfHeader && header, seqan2::VcfIOContext<> const & io_context) :
 //         _header{std::move(header)},
 //         _io_context{io_context}
 //     {}
 //     //!\}
 
 //     //!\brief Returns a reference to the read record.
-//     seqan::VcfRecord & seqan_record() noexcept
+//     seqan2::VcfRecord & seqan_record() noexcept
 //     {
 //         return _record;
 //     }
 
 //     //!\brief overload
-//     seqan::VcfRecord const & seqan_record() const noexcept
+//     seqan2::VcfRecord const & seqan_record() const noexcept
 //     {
 //         return _record;
 //     }
@@ -114,15 +114,15 @@
 //     auto variant_identifier() const noexcept
 //     {
 //         auto * data_ptr = std::addressof(_record.id[0]);
-//         return std::span{data_ptr, seqan::length(_record.id)};
+//         return std::span{data_ptr, seqan2::length(_record.id)};
 //     }
 
 //     //!\brief Returns the chromosome id stored for the record.
 //     std::string_view contig_name() const noexcept
 //     {
-//         assert(_record.rID < seqan::length(seqan::contigNames(_io_context)));
+//         assert(_record.rID < seqan2::length(seqan2::contigNames(_io_context)));
 
-//         return {seqan::toCString(seqan::contigNames(_io_context)[_record.rID])};
+//         return {seqan2::toCString(seqan2::contigNames(_io_context)[_record.rID])};
 //     }
 
 //     //!\brief Generates and returns the delta events for this record.
@@ -250,7 +250,7 @@
 //             // case must not be preserved
 
 //         // Do not process SVs or invalid alternative data.
-//         if (seqan::empty(_record.alt) || seqan::empty(_record.ref) || _record.alt[0] == '*' || _record.alt[0] == '<')
+//         if (seqan2::empty(_record.alt) || seqan2::empty(_record.ref) || _record.alt[0] == '*' || _record.alt[0] == '<')
 //             return {false, delta_events};
 
 //         auto alternatives = split_by_delimiter(to_span(_record.alt), ',');
@@ -305,7 +305,7 @@
 //             {
 //                 size_t const variant_size = std::ranges::distance(alt_it, alt_it_rev.base());
 //                 auto variant = alternative.subspan(alt_prefix_offset, variant_size)
-//                              | seqan3::views::char_to<jst::contrib::dna5>
+//                              | seqan3::views::char_to<spm::dna5>
 //                              | seqan3::ranges::to<std::vector>;
 
 //                 if (alternative.size() == reference_segment.size()) // Substitution.
@@ -328,7 +328,7 @@
 //     //!\brief Determines the sample count.
 //     size_t sample_count() const noexcept
 //     {
-//         return seqan::length(_record.genotypeInfos);
+//         return seqan2::length(_record.genotypeInfos);
 //     }
 
 //     //!\brief Determines the number of haplotypes per sample.
@@ -353,7 +353,7 @@
 //     //!\brief Checks wether genotype infos are given for the current record.
 //     bool genotype_info_given() const noexcept
 //     {
-//         return !seqan::empty(_record.format) && seqan::startsWith(_record.format, "GT");
+//         return !seqan2::empty(_record.format) && seqan2::startsWith(_record.format, "GT");
 //     }
 
 //     //!\brief Returns the seqan char string as a `std::span<char const>`.
@@ -363,10 +363,10 @@
 //     //!\endcond
 //     std::span<const char> to_span(seqan_range_t const & range) const noexcept
 //     {
-//         if (seqan::empty(range))
+//         if (seqan2::empty(range))
 //             return std::span<const char>{};
 
-//         return std::span{std::addressof(range[0]), seqan::length(range)};
+//         return std::span{std::addressof(range[0]), seqan2::length(range)};
 //     }
 // };
 
@@ -481,17 +481,17 @@
 
 //     log(verbosity_level::verbose, logging_level::info, "Initialise parsing vcf file ", vcf_file_path);
 
-//     seqan::VcfFileIn vcf_file{vcf_file_path.c_str()};
+//     seqan2::VcfFileIn vcf_file{vcf_file_path.c_str()};
 
-//     seqan::VcfHeader vcf_header{};
-//     seqan::readHeader(vcf_header, vcf_file);
+//     seqan2::VcfHeader vcf_header{};
+//     seqan2::readHeader(vcf_header, vcf_file);
 
 //     // TODO: lets assume range based interface.
 //     // When we construct the file the first record could be already processed and the header as well as some auxiliary
 //     // infos are already stored and accessible.
 
 //     // If the file is empty (no record stored), return an empty JST.
-//     if (seqan::atEnd(vcf_file))
+//     if (seqan2::atEnd(vcf_file))
 //     {
 //         log(verbosity_level::standard,
 //             logging_level::warning,
@@ -500,7 +500,7 @@
 //     }
 
 //     // Read first record:
-//     augmented_vcf_record record{std::move(vcf_header), seqan::context(vcf_file)};
+//     augmented_vcf_record record{std::move(vcf_header), seqan2::context(vcf_file)};
 
 //     // ----------------------------------------------------------------------------
 //     // Generate one JST for every contig
@@ -542,10 +542,10 @@
 //     };
 
 //     log(verbosity_level::standard, logging_level::info, "Start processing records");
-//     assert(!seqan::atEnd(vcf_file));
+//     assert(!seqan2::atEnd(vcf_file));
 
 //     std::vector<jst_t> jst_per_contig{}; // Store all generated JSTs.
-//     seqan::readRecord(record.seqan_record(), vcf_file); // Read first record.
+//     seqan2::readRecord(record.seqan_record(), vcf_file); // Read first record.
 //     bool vcf_eof = false; // Check if the vcf is at end which guaranteed to be not the case here.
 
 //     while (!vcf_eof)
@@ -567,14 +567,14 @@
 //         // Create a new jst with the current contig and haplotype count.
 //         jst_t jst{std::move(ref_contig), record.haplotype_count()};
 
-//         while (!seqan::atEnd(vcf_file) && record.contig_name() == current_contig_name)
+//         while (!seqan2::atEnd(vcf_file) && record.contig_name() == current_contig_name)
 //         {
 //             log(verbosity_level::verbose, logging_level::info, "Record: ", record);
 //             insert_events_from_record(jst, record);
-//             seqan::readRecord(record.seqan_record(), vcf_file);
+//             seqan2::readRecord(record.seqan_record(), vcf_file);
 //         }
 //         jst_per_contig.emplace_back(std::move(jst));
-//         vcf_eof = seqan::atEnd(vcf_file);
+//         vcf_eof = seqan2::atEnd(vcf_file);
 //     }
 
 //     assert(!jst_per_contig.empty());

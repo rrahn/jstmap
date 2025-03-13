@@ -7,14 +7,14 @@
 
 #include <benchmark/benchmark.h>
 
-#include <libcontrib/matcher/pigeonhole_matcher.hpp>
+#include <libspm/matcher/pigeonhole_matcher.hpp>
 
 #include "fixture_pigeonhole_pattern_ibf.hpp"
 
 namespace just::bench {
 
 BENCHMARK_TEMPLATE_DEFINE_F(fixture_pigeonhole_pattern_ibf, pigeonhole, capture<&chr22_sim100x100Ke3_ibf32768>)(benchmark::State& state) {
-    run(state, [&] (auto const & needles) { return jst::contrib::pigeonhole_matcher(needles, to_error_rate(state.range(1))); });
+    run(state, [&] (auto const & needles) { return spm::pigeonhole_matcher(needles, to_error_rate(state.range(1))); });
 }
 
 BENCHMARK_REGISTER_F(fixture_pigeonhole_pattern_ibf, pigeonhole)

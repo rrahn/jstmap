@@ -14,7 +14,7 @@
 #include <jstmap/global/load_jst.hpp>
 #include <jstmap/search/load_queries.hpp>
 
-#include <libcontrib/matcher/myers_matcher.hpp>
+#include <libspm/matcher/myers_matcher.hpp>
 #include <libjst/rcms/haplotype_viewer.hpp>
 
 template <typename rcs_store_t>
@@ -33,7 +33,7 @@ static void myers_pattern(benchmark::State & state, args_t && ...args)
     libjst::haplotype_viewer viewer{rcs_store};
 
     float const error_rate = static_cast<float>(state.range(0)) / 100.0 + 0.00001;
-    jst::contrib::myers_matcher pattern(needle, std::ceil(needle.size() * error_rate));
+    spm::myers_matcher pattern(needle, std::ceil(needle.size() * error_rate));
     size_t hit_count{};
     for (auto _ : state)
     {

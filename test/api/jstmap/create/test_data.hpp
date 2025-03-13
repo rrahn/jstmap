@@ -12,7 +12,7 @@
 namespace jstmap::test
 {
 
-using jst::contrib::operator""_dna4;
+using spm::operator""_dna4;
 
 inline const raw_sequence_t reference = "aacctt"_dna4;
 
