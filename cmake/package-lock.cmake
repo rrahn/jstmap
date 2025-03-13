@@ -61,6 +61,17 @@ CPMDeclarePackage (libjst
                    OPTIONS "LIBJST_DEVELOPER_MODE OFF" "CMAKE_MESSAGE_LOG_LEVEL WARNING"
 )
 
+# libspm
+set (LIBSPM_VERSION 49b95a2f7d0578968db194a143ab7a2f3b28227f)
+CPMDeclarePackage (libspm
+                   NAME libspm
+                   GIT_TAG ${LIBSPM_VERSION}
+                   GITHUB_REPOSITORY rrahn/libspm
+                   SYSTEM TRUE
+                   EXCLUDE_FROM_ALL TRUE
+                   OPTIONS "LIBSPM_DEVELOPER_MODE OFF" "CMAKE_MESSAGE_LOG_LEVEL WARNING"
+)
+
 # googletest
 set (GOOGLETEST_VERSION 1.16.0)
 CPMDeclarePackage (googletest

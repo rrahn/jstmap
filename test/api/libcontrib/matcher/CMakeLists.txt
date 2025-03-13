@@ -1,5 +1,0 @@
-add_libcontrib_test (horspool_matcher_test.cpp)
-add_libcontrib_test (shiftor_matcher_test.cpp)
-add_libcontrib_test (myers_matcher_test.cpp)
-add_libcontrib_test (myers_matcher_restorable_test.cpp)
-add_libcontrib_test (pigeonhole_matcher_test.cpp)
