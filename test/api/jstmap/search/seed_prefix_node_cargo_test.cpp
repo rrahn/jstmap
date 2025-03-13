@@ -7,7 +7,7 @@
 
 #include <gtest/gtest.h>
 
-#include <libcontrib/seqan/alphabet.hpp>
+#include <libspm/seqan/alphabet.hpp>
 
 #include <libjst/rcms/rcs_store_reversed.hpp>
 #include <libjst/sequence_tree/coloured_tree.hpp>
@@ -19,7 +19,7 @@
 #include <jstmap/global/jstmap_types.hpp>
 #include <jstmap/search/seed_prefix_node_cargo.hpp>
 
-using jst::contrib::operator""_dna5;
+using spm::operator""_dna5;
 
 struct seed_prefix_node_cargo_test : public ::testing::Test
 {

@@ -17,13 +17,13 @@
 #include <seqan3/io/sequence_file/input.hpp>
 #include <seqan3/alignment/scoring/scoring_scheme_base.hpp>
 
-#include <libcontrib/seqan/alphabet.hpp>
+#include <libspm/seqan/alphabet.hpp>
 
 namespace jstmap
 {
 
 //!\brief The sequence type loaded from the disk.
-using raw_sequence_t = std::vector<jst::contrib::dna5>;
+using raw_sequence_t = std::vector<spm::dna5>;
 
 template <typename char_t, seqan3::arithmetic score_t = int8_t>
 class scoring_scheme : public seqan3::scoring_scheme_base<scoring_scheme<char_t, score_t>, char_t, score_t>
@@ -59,19 +59,19 @@ public:
 };
 
 //!\brief Default constructed objects deduce to `int8_t`.
-scoring_scheme() -> scoring_scheme<jst::contrib::dna5, int8_t>;
+scoring_scheme() -> scoring_scheme<spm::dna5, int8_t>;
 
 /*!\brief Attention: This guide does not actually deduce from the underlying type, but always defaults to `int8_t`.
  * To use a larger type, specify the template argument manually.
  */
 template <seqan3::arithmetic score_arg_type>
 scoring_scheme(seqan3::match_score<score_arg_type>,
-               seqan3::mismatch_score<score_arg_type>) -> scoring_scheme<jst::contrib::dna5, int8_t>;
+               seqan3::mismatch_score<score_arg_type>) -> scoring_scheme<spm::dna5, int8_t>;
 
 
 struct sequence_input_traits : public seqan3::sequence_file_input_default_traits_dna
 {
-    using sequence_alphabet = jst::contrib::dna5;
-    using sequence_legal_alphabet = jst::contrib::dna15; // conversion?
+    using sequence_alphabet = spm::dna5;
+    using sequence_legal_alphabet = spm::dna15; // conversion?
 };
 }  // namespace jstmap

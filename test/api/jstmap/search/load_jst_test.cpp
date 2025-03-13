@@ -20,7 +20,7 @@
 
 TEST(jstmap_index, load_jst)
 {
-    using jst::contrib::operator""_dna4;
+    using spm::operator""_dna4;
 
     std::filesystem::path jst_file{DATADIR"sim_refx5_p0.jst"};
     auto jst = jstmap::load_jst(jst_file);

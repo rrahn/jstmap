@@ -40,9 +40,9 @@ namespace just::bench
         void run(::benchmark::State & state, matcher_t matcher)
         {
             auto tree_closure = libjst::labelled() | libjst::coloured()
-                                                   | libjst::trim(jst::contrib::window_size(matcher) - 1)
+                                                   | libjst::trim(spm::window_size(matcher) - 1)
                                                    | libjst::prune()
-                                                   | libjst::left_extend(jst::contrib::window_size(matcher) - 1)
+                                                   | libjst::left_extend(spm::window_size(matcher) - 1)
                                                    | libjst::merge();
 
             base_t::run(state, matcher, tree_closure, [] (auto const & tree) {

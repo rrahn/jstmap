@@ -18,7 +18,7 @@
 #include <jstmap/global/load_jst.hpp>
 #include <jstmap/global/jstmap_types.hpp>
 
-#include <libcontrib/seqan/alphabet.hpp>
+#include <libspm/seqan/alphabet.hpp>
 
 using sequence_t = jstmap::reference_t;
 
@@ -57,8 +57,8 @@ sequence_t sample_query(sequence_t const & reference, size_t const query_size)
     while (true) {
         size_t offset = dist(rng);
         auto ref_it = std::ranges::next(std::ranges::begin(reference)) + offset;
-        if (std::ranges::all_of(ref_it, ref_it + query_size, [] (auto s) { return s == jst::contrib::dna5{'A'} ||
-                                                                                  s == jst::contrib::dna5{'N'}; })) {
+        if (std::ranges::all_of(ref_it, ref_it + query_size, [] (auto s) { return s == spm::dna5{'A'} ||
+                                                                                  s == spm::dna5{'N'}; })) {
             continue;
         } else {
             std::ranges::copy_n(ref_it, query_size, std::ranges::begin(query));

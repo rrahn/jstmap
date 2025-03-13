@@ -14,7 +14,7 @@
 #include <jstmap/global/load_jst.hpp>
 #include <jstmap/search/load_queries.hpp>
 
-#include <libcontrib/matcher/shiftor_matcher.hpp>
+#include <libspm/matcher/shiftor_matcher.hpp>
 #include <libjst/rcms/haplotype_viewer.hpp>
 
 template <typename rcs_store_t>
@@ -35,7 +35,7 @@ static void shiftor_pattern(benchmark::State & state, args_t && ...args)
     jstmap::rcs_store_t rcs_store = jstmap::load_jst(jst_file);
     sequence_t needle = jstmap::load_queries(needle_file)[0].sequence();
 
-    jst::contrib::shiftor_matcher pattern(needle);
+    spm::shiftor_matcher pattern(needle);
     libjst::haplotype_viewer viewer{rcs_store};
 
     size_t hit_count{};

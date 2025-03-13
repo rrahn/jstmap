@@ -23,7 +23,7 @@ namespace jstmap
     private:
 
         using best_path_match_t = std::pair<match_position, int32_t>;
-        using matcher_state_t = jst::contrib::matcher_state_t<extender_t>;
+        using matcher_state_t = spm::matcher_state_t<extender_t>;
         using state_t = std::pair<matcher_state_t, best_path_match_t>;
         using state_stack_t = std::stack<state_t>;
 

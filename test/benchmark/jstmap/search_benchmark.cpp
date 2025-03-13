@@ -13,9 +13,9 @@
 #include <jstmap/global/load_jst.hpp>
 #include <jstmap/search/load_queries.hpp>
 
-#include <libcontrib/matcher/horspool_matcher.hpp>
-#include <libcontrib/matcher/shiftor_matcher.hpp>
-#include <libcontrib/matcher/shiftor_matcher_restorable.hpp>
+#include <libspm/matcher/horspool_matcher.hpp>
+#include <libspm/matcher/shiftor_matcher.hpp>
+#include <libspm/matcher/shiftor_matcher_restorable.hpp>
 #include <libjst/search/polymorphic_sequence_searcher.hpp>
 #include <libjst/search/polymorphic_sequence_searcher_multi_threaded.hpp>
 
@@ -99,7 +99,7 @@ static void online_search_horspool(benchmark::State & state, args_t && ...args)
     jstmap::rcs_store_t rcs_store = jstmap::load_jst(jst_file);
     sequence_t query{sample_query(rcs_store.source(), state.range(0))};
 
-    jst::contrib::horspool_matcher matcher{query};
+    spm::horspool_matcher matcher{query};
     run_parallel(state, matcher, rcs_store, state.range(1));
 }
 
@@ -111,7 +111,7 @@ static void online_search_shiftor(benchmark::State & state, args_t && ...args)
     jstmap::rcs_store_t rcs_store = jstmap::load_jst(jst_file);
     sequence_t query{sample_query(rcs_store.source(), state.range(0))};
 
-    jst::contrib::shiftor_matcher matcher{query};
+    spm::shiftor_matcher matcher{query};
     run_parallel(state, matcher, rcs_store, state.range(1));
 }
 
@@ -123,7 +123,7 @@ static void online_search_restorable_shiftor(benchmark::State & state, args_t &&
     jstmap::rcs_store_t rcs_store = jstmap::load_jst(jst_file);
     sequence_t query{sample_query(rcs_store.source(), state.range(0))};
 
-    jst::contrib::restorable_shiftor_matcher matcher{query};
+    spm::restorable_shiftor_matcher matcher{query};
     run_parallel(state, matcher, rcs_store, state.range(1));
 }
 // Register the function as a benchmark
