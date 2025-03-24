@@ -39,7 +39,7 @@ CPMDeclarePackage (seqan3
 )
 
 # libjst
-set (LIBJST_VERSION bb3da768840026bf62a5d9869c04da6c8460a34f)
+set (LIBJST_VERSION 01bbf668d36606443b10993493af2a4f58ab90e8)
 CPMDeclarePackage (libjst
                    NAME libjst
                    GIT_TAG ${LIBJST_VERSION}
