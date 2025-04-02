@@ -50,7 +50,7 @@ CPMDeclarePackage (libjst
 )
 
 # libspm
-set (LIBSPM_VERSION 094efd745853f617bc60456ca73262018d3e71d5)
+set (LIBSPM_VERSION 9b1468df9b10913b9e16dd07062d85ba6f948634)
 CPMDeclarePackage (libspm
                    NAME libspm
                    GIT_TAG ${LIBSPM_VERSION}
